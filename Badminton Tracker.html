@@ -1,0 +1,1203 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Badminton Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f6f4ef;
+      --bg-2: #ece9e0;
+      --surface: #ffffff;
+      --ink: #1a1a17;
+      --ink-2: #4a4a44;
+      --ink-3: #8a8a82;
+      --line: #e1ddd2;
+      --line-2: #d3cec0;
+      /* court-green accent */
+      --accent: oklch(70% 0.16 140);
+      --accent-ink: oklch(28% 0.06 140);
+      --accent-soft: oklch(94% 0.05 140);
+      --warn: oklch(65% 0.16 55);
+      --warn-soft: oklch(95% 0.04 70);
+      --danger: oklch(58% 0.18 28);
+      --radius: 14px;
+      --radius-sm: 8px;
+      --shadow: 0 1px 0 rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.04);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: 'Manrope', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      font-size: 15px;
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; font-feature-settings: 'tnum' 1; }
+    button { font-family: inherit; cursor: pointer; }
+    input, button { font-family: inherit; color: inherit; }
+
+    .app {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 28px 80px;
+    }
+
+    /* ───── Header ───── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 28px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-mark {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: var(--ink);
+      color: var(--accent);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+    }
+    .brand-title {
+      font-weight: 800;
+      font-size: 19px;
+      letter-spacing: -0.01em;
+    }
+    .brand-sub {
+      font-size: 12px;
+      color: var(--ink-3);
+      margin-top: -2px;
+    }
+
+    .week-nav {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px;
+      box-shadow: var(--shadow);
+    }
+    .week-nav button {
+      border: 0;
+      background: transparent;
+      width: 32px; height: 32px;
+      border-radius: 999px;
+      display: grid; place-items: center;
+      color: var(--ink-2);
+    }
+    .week-nav button:hover { background: var(--bg-2); color: var(--ink); }
+    .week-label {
+      padding: 0 14px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: -0.005em;
+      min-width: 200px;
+      text-align: center;
+    }
+    .week-label .small { color: var(--ink-3); font-weight: 500; margin-left: 6px; }
+    .today-pill {
+      margin-left: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: var(--accent-ink);
+      border: 0;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+    .today-pill:disabled { opacity: 0.4; cursor: default; }
+
+    /* ───── Tabs (Sessions vs Roster) ───── */
+    .tabs {
+      display: inline-flex;
+      gap: 2px;
+      background: var(--bg-2);
+      padding: 4px;
+      border-radius: 12px;
+      margin-bottom: 22px;
+    }
+    .tab {
+      border: 0;
+      background: transparent;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 13.5px;
+      color: var(--ink-2);
+      letter-spacing: -0.005em;
+    }
+    .tab.active {
+      background: var(--surface);
+      color: var(--ink);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    }
+    .tab .count {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      background: var(--bg-2);
+      color: var(--ink-3);
+      padding: 1px 6px;
+      border-radius: 6px;
+      margin-left: 6px;
+      font-weight: 500;
+    }
+    .tab.active .count { background: var(--bg); color: var(--ink-2); }
+
+    /* ───── Sessions grid ───── */
+    .sessions {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 980px) {
+      .sessions { grid-template-columns: 1fr; }
+    }
+
+    .day-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .day-card.is-today { border-color: var(--ink); box-shadow: 0 0 0 3px var(--accent-soft), var(--shadow); }
+    .day-card.is-past { opacity: 0.92; }
+
+    .day-head {
+      padding: 16px 18px 14px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .day-name {
+      font-weight: 800;
+      font-size: 17px;
+      letter-spacing: -0.015em;
+    }
+    .day-date {
+      font-size: 12px;
+      color: var(--ink-3);
+      margin-top: 2px;
+    }
+    .day-tag {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--bg-2);
+      color: var(--ink-2);
+    }
+    .day-tag.today { background: var(--accent); color: var(--accent-ink); }
+    .day-tag.past { background: var(--bg); color: var(--ink-3); }
+
+    .court-row {
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--line);
+    }
+    .court-row label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-2);
+      letter-spacing: -0.005em;
+    }
+    .court-input-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+    .court-input-wrap .prefix {
+      position: absolute;
+      left: 10px;
+      color: var(--ink-3);
+      font-size: 13px;
+      pointer-events: none;
+    }
+    .court-input {
+      width: 110px;
+      padding: 7px 10px 7px 22px;
+      border: 1px solid var(--line-2);
+      background: var(--surface);
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13.5px;
+      font-weight: 600;
+      text-align: right;
+      outline: none;
+    }
+    .court-input:focus { border-color: var(--ink); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+    .roster-list {
+      list-style: none;
+      margin: 0;
+      padding: 6px 0;
+      flex: 1;
+      min-height: 60px;
+    }
+    .roster-empty {
+      padding: 22px 18px;
+      text-align: center;
+      color: var(--ink-3);
+      font-size: 12.5px;
+    }
+    .roster-empty button {
+      margin-top: 8px;
+      border: 1px dashed var(--line-2);
+      background: transparent;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-2);
+    }
+    .roster-empty button:hover { border-color: var(--ink); color: var(--ink); }
+
+    .roster-item {
+      display: grid;
+      grid-template-columns: 22px 1fr auto;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 18px;
+      border-bottom: 1px dashed var(--line);
+    }
+    .roster-item:last-child { border-bottom: 0; }
+    .roster-item.attended { background: var(--accent-soft); }
+
+    .check {
+      width: 22px; height: 22px;
+      border-radius: 7px;
+      border: 1.5px solid var(--line-2);
+      background: var(--surface);
+      display: grid; place-items: center;
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+    .check:hover { border-color: var(--ink); }
+    .check.on {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: var(--accent);
+    }
+    .check svg { width: 14px; height: 14px; opacity: 0; }
+    .check.on svg { opacity: 1; }
+
+    .person-name {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: -0.005em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .person-name.dim { color: var(--ink-3); font-weight: 500; }
+    .shuttle-flag {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: var(--warn-soft);
+      color: var(--warn);
+      cursor: help;
+    }
+
+    .person-cost {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      font-size: 13.5px;
+      color: var(--ink);
+      min-width: 64px;
+      text-align: right;
+    }
+    .person-cost.dim { color: var(--ink-3); font-weight: 500; }
+    .person-cost .surcharge { color: var(--warn); font-size: 10.5px; display: block; line-height: 1; margin-top: 1px; font-weight: 600; }
+
+    .day-foot {
+      padding: 12px 18px 14px;
+      border-top: 1px solid var(--line);
+      background: var(--bg);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 4px 12px;
+      align-items: baseline;
+    }
+    .day-foot .label { font-size: 11.5px; color: var(--ink-3); letter-spacing: 0.02em; text-transform: uppercase; font-weight: 600; }
+    .day-foot .value { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; text-align: right; }
+    .day-foot .value.big { font-size: 16px; }
+
+    /* ───── Roster tab ───── */
+    .roster-panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .roster-panel-head {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .roster-panel-head h2 {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -0.015em;
+    }
+    .roster-panel-head p {
+      margin: 2px 0 0;
+      font-size: 12.5px;
+      color: var(--ink-3);
+    }
+
+    .add-person {
+      display: flex;
+      gap: 6px;
+      padding: 14px 20px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--line);
+    }
+    .add-person input {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid var(--line-2);
+      background: var(--surface);
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+    }
+    .add-person input:focus { border-color: var(--ink); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .add-person button {
+      padding: 8px 16px;
+      border: 0;
+      background: var(--ink);
+      color: var(--accent);
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .add-person button:hover { background: #000; }
+    .add-person button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .people-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .people-table thead th {
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface);
+    }
+    .people-table thead th.center { text-align: center; }
+    .people-table tbody td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: middle;
+    }
+    .people-table tbody tr:last-child td { border-bottom: 0; }
+    .people-table tbody tr:hover { background: var(--bg); }
+
+    .name-cell {
+      font-weight: 600;
+      font-size: 14.5px;
+      letter-spacing: -0.005em;
+    }
+    .name-cell input {
+      width: 100%;
+      max-width: 240px;
+      border: 0;
+      background: transparent;
+      font: inherit;
+      padding: 4px 6px;
+      border-radius: 6px;
+      outline: none;
+      margin-left: -6px;
+    }
+    .name-cell input:hover { background: var(--bg-2); }
+    .name-cell input:focus { background: var(--surface); box-shadow: 0 0 0 2px var(--accent); }
+
+    .day-toggles {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+    }
+    .day-chip {
+      width: 36px; height: 28px;
+      border-radius: 7px;
+      border: 1px solid var(--line-2);
+      background: var(--surface);
+      color: var(--ink-3);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      display: grid;
+      place-items: center;
+    }
+    .day-chip:hover { border-color: var(--ink-2); color: var(--ink-2); }
+    .day-chip.on {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: var(--accent);
+    }
+
+    .toggle-shuttle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .toggle-track {
+      width: 36px; height: 20px;
+      background: var(--line-2);
+      border-radius: 999px;
+      position: relative;
+      transition: background 0.15s ease;
+    }
+    .toggle-thumb {
+      position: absolute;
+      top: 2px; left: 2px;
+      width: 16px; height: 16px;
+      background: var(--surface);
+      border-radius: 50%;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+      transition: left 0.15s ease;
+    }
+    .toggle-shuttle.on .toggle-track { background: var(--accent); }
+    .toggle-shuttle.on .toggle-thumb { left: 18px; }
+    .toggle-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-2);
+    }
+    .toggle-shuttle.on .toggle-label { color: var(--accent-ink); }
+
+    .row-actions {
+      text-align: right;
+    }
+    .icon-btn {
+      width: 30px; height: 30px;
+      border-radius: 7px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--ink-3);
+      display: inline-grid;
+      place-items: center;
+    }
+    .icon-btn:hover { color: var(--danger); background: oklch(95% 0.04 28); }
+
+    /* ───── Week summary bar ───── */
+    .week-summary {
+      margin-top: 18px;
+      padding: 14px 18px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      flex-wrap: wrap;
+    }
+    .ws-item { display: flex; flex-direction: column; gap: 1px; }
+    .ws-item .label { font-size: 10.5px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; }
+    .ws-item .value { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+    .ws-spacer { flex: 1; }
+    .ws-note { font-size: 12px; color: var(--ink-3); }
+
+    /* small reset */
+    h1, h2, h3 { margin: 0; }
+
+    /* helper: tooltip */
+    [data-tip] { position: relative; }
+    [data-tip]:hover::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--ink);
+      color: var(--bg);
+      font-family: 'Manrope', sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 5px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* roster mini section */
+    .day-actions {
+      padding: 8px 18px 12px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface);
+    }
+    .day-action {
+      border: 1px solid var(--line-2);
+      background: transparent;
+      color: var(--ink-2);
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 4px 9px;
+      border-radius: 6px;
+    }
+    .day-action:hover { border-color: var(--ink); color: var(--ink); }
+
+    /* drop person from day */
+    .roster-item .drop-btn {
+      opacity: 0;
+      width: 22px; height: 22px;
+      border-radius: 6px;
+      border: 0;
+      background: transparent;
+      color: var(--ink-3);
+      display: grid; place-items: center;
+      transition: opacity 0.1s ease;
+      margin-left: 4px;
+    }
+    .roster-item:hover .drop-btn { opacity: 1; }
+    .roster-item .drop-btn:hover { color: var(--danger); background: var(--bg-2); }
+
+    /* end-of-day pay summary in footer */
+    .pay-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: var(--accent-ink);
+    }
+    .pay-pill.zero { background: var(--bg-2); color: var(--ink-3); }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel">
+/* Badminton Tracker — single-file React app
+   Data persists to localStorage. */
+
+const { useState, useEffect, useMemo, useRef } = React;
+
+/* ───── Constants ───── */
+const DAYS = [
+  { key: 'tue', label: 'Tuesday',   short: 'Tue', dow: 2 },
+  { key: 'wed', label: 'Wednesday', short: 'Wed', dow: 3 },
+  { key: 'sat', label: 'Saturday',  short: 'Sat', dow: 6 },
+];
+const SHUTTLE_SURCHARGE = 2;
+const STORAGE_KEY = 'badminton-tracker-v1';
+
+/* ───── Date utils ───── */
+const pad = (n) => String(n).padStart(2, '0');
+const isoDate = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const todayISO = () => isoDate(new Date());
+function startOfWeek(d) {
+  // Monday-start week
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  const day = x.getDay(); // 0=Sun
+  const diff = (day === 0 ? -6 : 1 - day);
+  x.setDate(x.getDate() + diff);
+  return x;
+}
+function addDays(d, n) {
+  const x = new Date(d);
+  x.setDate(x.getDate() + n);
+  return x;
+}
+function dateForDayOfWeek(weekStart, dow) {
+  // weekStart = Monday; dow as JS getDay()
+  const offset = dow === 0 ? 6 : dow - 1;
+  return addDays(weekStart, offset);
+}
+function fmtMonthDay(d) {
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+function fmtWeekRange(start) {
+  const end = addDays(start, 6);
+  const sameMonth = start.getMonth() === end.getMonth();
+  const startStr = sameMonth
+    ? start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+    : start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const endStr = end.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  return `${startStr} – ${endStr}`;
+}
+const money = (n) => `${(Math.round(n * 100) / 100).toFixed(2)}`;
+
+/* ───── Persistence ───── */
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (e) { return null; }
+}
+function saveState(s) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); } catch (e) {}
+}
+
+/* Seed state — small example so the app isn't empty on first load */
+function seed() {
+  const id = () => Math.random().toString(36).slice(2, 10);
+  return {
+    people: [
+      { id: id(), name: 'Alex',     shuttlePaid: true,  days: ['tue', 'sat'] },
+      { id: id(), name: 'Bea',      shuttlePaid: true,  days: ['tue', 'wed', 'sat'] },
+      { id: id(), name: 'Chen',     shuttlePaid: false, days: ['wed'] },
+      { id: id(), name: 'Devi',     shuttlePaid: true,  days: ['sat'] },
+      { id: id(), name: 'Eli',      shuttlePaid: false, days: ['tue', 'wed'] },
+      { id: id(), name: 'Farah',    shuttlePaid: true,  days: ['sat'] },
+    ],
+    sessions: {}, // { 'YYYY-MM-DD': { courtHire: number, attendance: { personId: bool } } }
+    activeTab: 'sessions',
+  };
+}
+
+/* ───── App ───── */
+function App() {
+  const [state, setState] = useState(() => loadState() || seed());
+  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
+  const [tab, setTab] = useState(state.activeTab || 'sessions');
+  const [newName, setNewName] = useState('');
+  const newNameRef = useRef(null);
+
+  useEffect(() => { saveState({ ...state, activeTab: tab }); }, [state, tab]);
+
+  /* derived */
+  const peopleById = useMemo(() => Object.fromEntries(state.people.map(p => [p.id, p])), [state.people]);
+  const todayIso = todayISO();
+
+  /* mutators */
+  const updatePeople = (fn) => setState(s => ({ ...s, people: fn(s.people) }));
+  const updateSessions = (fn) => setState(s => ({ ...s, sessions: fn(s.sessions) }));
+
+  function ensureSession(date) {
+    if (!state.sessions[date]) {
+      updateSessions(ss => ({ ...ss, [date]: { courtHire: 0, attendance: {} } }));
+      return { courtHire: 0, attendance: {} };
+    }
+    return state.sessions[date];
+  }
+  function setCourtHire(date, value) {
+    updateSessions(ss => ({
+      ...ss,
+      [date]: { courtHire: value, attendance: (ss[date] && ss[date].attendance) || {} },
+    }));
+  }
+  function toggleAttendance(date, personId) {
+    updateSessions(ss => {
+      const cur = ss[date] || { courtHire: 0, attendance: {} };
+      const att = { ...cur.attendance };
+      att[personId] = !att[personId];
+      return { ...ss, [date]: { ...cur, attendance: att } };
+    });
+  }
+  function markAllAttended(date, personIds, value) {
+    updateSessions(ss => {
+      const cur = ss[date] || { courtHire: 0, attendance: {} };
+      const att = { ...cur.attendance };
+      personIds.forEach(id => { att[id] = value; });
+      return { ...ss, [date]: { ...cur, attendance: att } };
+    });
+  }
+  function addPerson() {
+    const name = newName.trim();
+    if (!name) return;
+    const id = Math.random().toString(36).slice(2, 10);
+    updatePeople(ps => [...ps, { id, name, shuttlePaid: false, days: ['tue', 'wed', 'sat'] }]);
+    setNewName('');
+    newNameRef.current && newNameRef.current.focus();
+  }
+  function removePerson(id) {
+    updatePeople(ps => ps.filter(p => p.id !== id));
+    updateSessions(ss => {
+      const out = {};
+      for (const k of Object.keys(ss)) {
+        const { [id]: _, ...rest } = ss[k].attendance || {};
+        out[k] = { ...ss[k], attendance: rest };
+      }
+      return out;
+    });
+  }
+  function renamePerson(id, name) {
+    updatePeople(ps => ps.map(p => p.id === id ? { ...p, name } : p));
+  }
+  function toggleShuttle(id) {
+    updatePeople(ps => ps.map(p => p.id === id ? { ...p, shuttlePaid: !p.shuttlePaid } : p));
+  }
+  function togglePersonDay(id, dayKey) {
+    updatePeople(ps => ps.map(p => {
+      if (p.id !== id) return p;
+      const has = p.days.includes(dayKey);
+      return { ...p, days: has ? p.days.filter(d => d !== dayKey) : [...p.days, dayKey] };
+    }));
+  }
+  function addPersonToDay(personId, dayKey) {
+    togglePersonDay(personId, dayKey);
+  }
+
+  /* week navigation */
+  const goToToday = () => setWeekStart(startOfWeek(new Date()));
+  const prevWeek = () => setWeekStart(w => addDays(w, -7));
+  const nextWeek = () => setWeekStart(w => addDays(w, 7));
+  const isCurrentWeek = isoDate(weekStart) === isoDate(startOfWeek(new Date()));
+
+  return (
+    <div className="app">
+      <header className="topbar">
+        <div className="brand">
+          <div className="brand-mark">B</div>
+          <div>
+            <div className="brand-title">Badminton Tracker</div>
+            <div className="brand-sub">Tue · Wed · Sat — attendance & cost split</div>
+          </div>
+        </div>
+
+        <div className="week-nav" role="group" aria-label="Week navigation">
+          <button onClick={prevWeek} aria-label="Previous week" data-tip="Previous week">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <div className="week-label mono">
+            {fmtWeekRange(weekStart)}
+            {isCurrentWeek && <span className="small">this week</span>}
+          </div>
+          <button onClick={nextWeek} aria-label="Next week" data-tip="Next week">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+          <button className="today-pill" onClick={goToToday} disabled={isCurrentWeek}>Today</button>
+        </div>
+      </header>
+
+      <div className="tabs" role="tablist">
+        <button className={`tab ${tab === 'sessions' ? 'active' : ''}`} onClick={() => setTab('sessions')} role="tab">
+          Sessions
+        </button>
+        <button className={`tab ${tab === 'roster' ? 'active' : ''}`} onClick={() => setTab('roster')} role="tab">
+          People <span className="count mono">{state.people.length}</span>
+        </button>
+      </div>
+
+      {tab === 'sessions' && (
+        <SessionsView
+          weekStart={weekStart}
+          state={state}
+          peopleById={peopleById}
+          todayIso={todayIso}
+          onSetCourt={setCourtHire}
+          onToggleAtt={toggleAttendance}
+          onMarkAll={markAllAttended}
+          onAddPersonToDay={addPersonToDay}
+          onSwitchToRoster={() => setTab('roster')}
+        />
+      )}
+
+      {tab === 'roster' && (
+        <RosterView
+          people={state.people}
+          newName={newName}
+          setNewName={setNewName}
+          newNameRef={newNameRef}
+          onAdd={addPerson}
+          onRemove={removePerson}
+          onRename={renamePerson}
+          onToggleShuttle={toggleShuttle}
+          onToggleDay={togglePersonDay}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ───── Sessions view ───── */
+function SessionsView({ weekStart, state, peopleById, todayIso, onSetCourt, onToggleAtt, onMarkAll, onAddPersonToDay, onSwitchToRoster }) {
+  const dayInfos = DAYS.map(d => {
+    const date = dateForDayOfWeek(weekStart, d.dow);
+    const iso = isoDate(date);
+    const session = state.sessions[iso] || { courtHire: 0, attendance: {} };
+    const roster = state.people.filter(p => p.days.includes(d.key));
+    const attendees = roster.filter(p => session.attendance[p.id]);
+    const baseSplit = attendees.length > 0 && session.courtHire > 0
+      ? session.courtHire / attendees.length : 0;
+    const total = attendees.reduce((sum, p) => sum + baseSplit + (p.shuttlePaid ? 0 : SHUTTLE_SURCHARGE), 0);
+    return { ...d, date, iso, session, roster, attendees, baseSplit, total };
+  });
+
+  const weekTotal = dayInfos.reduce((s, di) => s + di.total, 0);
+  const weekCourt = dayInfos.reduce((s, di) => s + (di.attendees.length > 0 ? Number(di.session.courtHire) || 0 : 0), 0);
+  const weekAttendees = dayInfos.reduce((s, di) => s + di.attendees.length, 0);
+
+  return (
+    <>
+      <div className="sessions">
+        {dayInfos.map(di => (
+          <DayCard
+            key={di.iso}
+            di={di}
+            allPeople={state.people}
+            peopleById={peopleById}
+            isToday={di.iso === todayIso}
+            isPast={di.iso < todayIso}
+            onSetCourt={onSetCourt}
+            onToggleAtt={onToggleAtt}
+            onMarkAll={onMarkAll}
+            onAddPersonToDay={onAddPersonToDay}
+            onSwitchToRoster={onSwitchToRoster}
+          />
+        ))}
+      </div>
+
+      <div className="week-summary">
+        <div className="ws-item">
+          <span className="label">Week total</span>
+          <span className="value mono">{money(weekTotal)}</span>
+        </div>
+        <div className="ws-item">
+          <span className="label">Court hire</span>
+          <span className="value mono">{money(weekCourt)}</span>
+        </div>
+        <div className="ws-item">
+          <span className="label">Player-sessions</span>
+          <span className="value mono">{weekAttendees}</span>
+        </div>
+        <div className="ws-spacer" />
+        <div className="ws-note mono">+{money(SHUTTLE_SURCHARGE)} shuttle surcharge applies to anyone marked unpaid</div>
+      </div>
+    </>
+  );
+}
+
+/* ───── Day card ───── */
+function DayCard({ di, allPeople, peopleById, isToday, isPast, onSetCourt, onToggleAtt, onMarkAll, onAddPersonToDay, onSwitchToRoster }) {
+  const [courtStr, setCourtStr] = useState(String(di.session.courtHire || ''));
+  const [showAdd, setShowAdd] = useState(false);
+
+  useEffect(() => {
+    setCourtStr(di.session.courtHire ? String(di.session.courtHire) : '');
+  }, [di.iso, di.session.courtHire]);
+
+  const onCourtChange = (e) => {
+    const v = e.target.value.replace(/[^\d.]/g, '');
+    setCourtStr(v);
+    onSetCourt(di.iso, parseFloat(v) || 0);
+  };
+
+  const allOn = di.roster.length > 0 && di.attendees.length === di.roster.length;
+  const handleToggleAll = () => {
+    onMarkAll(di.iso, di.roster.map(p => p.id), !allOn);
+  };
+
+  const tag = isToday ? 'today' : (isPast ? 'past' : 'upcoming');
+  const tagLabel = isToday ? 'Today' : (isPast ? 'Past' : di.date.toLocaleDateString(undefined, { weekday: 'short' }).toUpperCase());
+
+  // people not yet in roster (for quick-add)
+  const eligibleToAdd = allPeople.filter(p => !p.days.includes(di.key));
+
+  return (
+    <section className={`day-card ${isToday ? 'is-today' : ''} ${isPast ? 'is-past' : ''}`} data-screen-label={`${di.label} ${di.iso}`}>
+      <div className="day-head">
+        <div>
+          <div className="day-name">{di.label}</div>
+          <div className="day-date mono">{fmtMonthDay(di.date)}</div>
+        </div>
+        <span className={`day-tag ${isToday ? 'today' : ''} ${isPast ? 'past' : ''}`}>
+          {tagLabel}
+        </span>
+      </div>
+
+      <div className="court-row">
+        <label htmlFor={`court-${di.iso}`}>Court hire</label>
+        <div className="court-input-wrap">
+          <span className="prefix">$</span>
+          <input
+            id={`court-${di.iso}`}
+            className="court-input"
+            type="text"
+            inputMode="decimal"
+            value={courtStr}
+            onChange={onCourtChange}
+            placeholder="0.00"
+          />
+        </div>
+      </div>
+
+      {di.roster.length > 0 && (
+        <div className="day-actions">
+          <button className="day-action" onClick={handleToggleAll}>
+            {allOn ? 'Clear attendance' : 'Mark all attended'}
+          </button>
+          {eligibleToAdd.length > 0 && (
+            <div style={{ position: 'relative' }}>
+              <button className="day-action" onClick={() => setShowAdd(v => !v)}>
+                + Add player
+              </button>
+              {showAdd && (
+                <QuickAddDropdown
+                  people={eligibleToAdd}
+                  onPick={(id) => { onAddPersonToDay(id, di.key); setShowAdd(false); }}
+                  onClose={() => setShowAdd(false)}
+                />
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      <ul className="roster-list">
+        {di.roster.length === 0 && (
+          <li className="roster-empty">
+            No one on the {di.label} roster yet.<br/>
+            <button onClick={onSwitchToRoster}>Manage people →</button>
+          </li>
+        )}
+        {di.roster.map(p => {
+          const attended = !!di.session.attendance[p.id];
+          const personCost = attended ? di.baseSplit + (p.shuttlePaid ? 0 : SHUTTLE_SURCHARGE) : 0;
+          return (
+            <li key={p.id} className={`roster-item ${attended ? 'attended' : ''}`}>
+              <button
+                className={`check ${attended ? 'on' : ''}`}
+                onClick={() => onToggleAtt(di.iso, p.id)}
+                aria-pressed={attended}
+                aria-label={`Toggle attendance for ${p.name}`}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </button>
+              <div className={`person-name ${attended ? '' : 'dim'}`}>
+                {p.name}
+                {!p.shuttlePaid && (
+                  <span className="shuttle-flag" data-tip="Shuttle cost unpaid · +$2 surcharge">
+                    +$2
+                  </span>
+                )}
+              </div>
+              <div className={`person-cost ${attended ? '' : 'dim'}`}>
+                {attended ? money(personCost) : '—'}
+                {attended && !p.shuttlePaid && <span className="surcharge">incl. +${SHUTTLE_SURCHARGE}</span>}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+
+      <div className="day-foot">
+        <span className="label">Attendees</span>
+        <span className="value mono">{di.attendees.length} / {di.roster.length}</span>
+        <span className="label">Base split</span>
+        <span className="value mono">{di.attendees.length > 0 && di.session.courtHire > 0 ? money(di.baseSplit) : '—'}</span>
+        <span className="label">Day total</span>
+        <span className="value big mono">{money(di.total)}</span>
+      </div>
+    </section>
+  );
+}
+
+/* ───── Quick-add dropdown ───── */
+function QuickAddDropdown({ people, onPick, onClose }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) onClose(); };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [onClose]);
+  return (
+    <div ref={ref} style={{
+      position: 'absolute',
+      top: 'calc(100% + 4px)',
+      left: 0,
+      background: 'var(--surface)',
+      border: '1px solid var(--line)',
+      borderRadius: 10,
+      boxShadow: '0 6px 20px rgba(0,0,0,0.08)',
+      minWidth: 160,
+      zIndex: 20,
+      padding: 4,
+      maxHeight: 220,
+      overflowY: 'auto',
+    }}>
+      {people.map(p => (
+        <button key={p.id} onClick={() => onPick(p.id)} style={{
+          display: 'block',
+          width: '100%',
+          textAlign: 'left',
+          border: 0,
+          background: 'transparent',
+          padding: '7px 10px',
+          borderRadius: 6,
+          fontSize: 13,
+          fontWeight: 600,
+          color: 'var(--ink)',
+        }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg)'}
+           onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+          {p.name}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/* ───── Roster (people management) view ───── */
+function RosterView({ people, newName, setNewName, newNameRef, onAdd, onRemove, onRename, onToggleShuttle, onToggleDay }) {
+  return (
+    <div className="roster-panel">
+      <div className="roster-panel-head">
+        <div>
+          <h2>People</h2>
+          <p>Add or remove players, set their regular days, and track shuttle payments.</p>
+        </div>
+      </div>
+
+      <div className="add-person">
+        <input
+          ref={newNameRef}
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') onAdd(); }}
+          placeholder="Add a player by name…"
+        />
+        <button onClick={onAdd} disabled={!newName.trim()}>Add</button>
+      </div>
+
+      {people.length === 0 ? (
+        <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--ink-3)', fontSize: 13 }}>
+          No players yet — add the first one above.
+        </div>
+      ) : (
+        <table className="people-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th className="center" style={{ width: 180 }}>Regular days</th>
+              <th className="center" style={{ width: 170 }}>Shuttle paid</th>
+              <th style={{ width: 60 }}></th>
+            </tr>
+          </thead>
+          <tbody>
+            {people.map(p => (
+              <tr key={p.id}>
+                <td className="name-cell">
+                  <input
+                    value={p.name}
+                    onChange={(e) => onRename(p.id, e.target.value)}
+                    placeholder="Name"
+                  />
+                </td>
+                <td>
+                  <div className="day-toggles">
+                    {DAYS.map(d => (
+                      <button
+                        key={d.key}
+                        className={`day-chip ${p.days.includes(d.key) ? 'on' : ''}`}
+                        onClick={() => onToggleDay(p.id, d.key)}
+                        data-tip={`${p.days.includes(d.key) ? 'Remove from' : 'Add to'} ${d.label}`}
+                      >
+                        {d.short}
+                      </button>
+                    ))}
+                  </div>
+                </td>
+                <td style={{ textAlign: 'center' }}>
+                  <label className={`toggle-shuttle ${p.shuttlePaid ? 'on' : ''}`}>
+                    <span className="toggle-track">
+                      <span className="toggle-thumb" />
+                    </span>
+                    <span className="toggle-label">{p.shuttlePaid ? 'Paid' : 'Unpaid (+$2)'}</span>
+                    <input
+                      type="checkbox"
+                      checked={p.shuttlePaid}
+                      onChange={() => onToggleShuttle(p.id)}
+                      style={{ display: 'none' }}
+                    />
+                  </label>
+                </td>
+                <td className="row-actions">
+                  <button
+                    className="icon-btn"
+                    onClick={() => {
+                      if (window.confirm(`Remove ${p.name || 'this player'}?`)) onRemove(p.id);
+                    }}
+                    data-tip="Remove player"
+                    aria-label="Remove player"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="3 6 5 6 21 6"/>
+                      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                      <path d="M10 11v6M14 11v6"/>
+                      <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
+/* ───── Mount ───── */
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+</script>
+</body>
+</html>
