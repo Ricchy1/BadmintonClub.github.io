@@ -621,10 +621,41 @@
       color: var(--accent-ink);
     }
     .pay-pill.zero { background: var(--bg-2); color: var(--ink-3); }
+
+    /* ───── Loading & sync indicator ───── */
+    .loading-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 120px 20px;
+      color: var(--ink-3);
+      gap: 12px;
+    }
+    .loading-screen .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid var(--line);
+      border-top-color: var(--ink);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .sync-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      display: inline-block;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    .sync-dot.offline { background: var(--danger); }
   </style>
 </head>
 <body>
   <div id="root"></div>
+
+  <!-- Supabase client library -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
   <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
@@ -632,9 +663,16 @@
 
   <script type="text/babel">
 /* Badminton Tracker — single-file React app
-   Data persists to localStorage. */
+   Data persists to Supabase (shared across all users). */
 
-const { useState, useEffect, useMemo, useRef } = React;
+const { useState, useEffect, useMemo, useRef, useCallback } = React;
+
+/* ═══════════════════════════════════════════════
+   ▸ SUPABASE CONFIG — paste your real values here
+   ═══════════════════════════════════════════════ */
+const SUPABASE_URL = 'https://kgainkqtzfnejb1xdpzt.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_mdmTsB1sxdhKgXWYGPugaQ_xYgSzlBG'; // ← PASTE YOUR FULL KEY HERE
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /* ───── Constants ───── */
 const DAYS = [
@@ -643,17 +681,16 @@ const DAYS = [
   { key: 'sat', label: 'Saturday',  short: 'Sat', dow: 6 },
 ];
 const SHUTTLE_SURCHARGE = 2;
-const STORAGE_KEY = 'badminton-tracker-v1';
+const DB_ROW_ID = 'shared'; // single shared row in the app_state table
 
 /* ───── Date utils ───── */
 const pad = (n) => String(n).padStart(2, '0');
 const isoDate = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const todayISO = () => isoDate(new Date());
 function startOfWeek(d) {
-  // Monday-start week
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
-  const day = x.getDay(); // 0=Sun
+  const day = x.getDay();
   const diff = (day === 0 ? -6 : 1 - day);
   x.setDate(x.getDate() + diff);
   return x;
@@ -664,7 +701,6 @@ function addDays(d, n) {
   return x;
 }
 function dateForDayOfWeek(weekStart, dow) {
-  // weekStart = Monday; dow as JS getDay()
   const offset = dow === 0 ? 6 : dow - 1;
   return addDays(weekStart, offset);
 }
@@ -673,25 +709,41 @@ function fmtMonthDay(d) {
 }
 function fmtWeekRange(start) {
   const end = addDays(start, 6);
-  const sameMonth = start.getMonth() === end.getMonth();
-  const startStr = sameMonth
-    ? start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-    : start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const startStr = start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   const endStr = end.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
   return `${startStr} – ${endStr}`;
 }
 const money = (n) => `${(Math.round(n * 100) / 100).toFixed(2)}`;
 
-/* ───── Persistence ───── */
-function loadState() {
+/* ───── Supabase Persistence ───── */
+async function loadStateFromDB() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch (e) { return null; }
+    const { data, error } = await supabase
+      .from('app_state')
+      .select('data')
+      .eq('id', DB_ROW_ID)
+      .single();
+    if (error || !data) return null;
+    return data.data;
+  } catch (e) {
+    console.error('Failed to load from Supabase:', e);
+    return null;
+  }
 }
-function saveState(s) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); } catch (e) {}
+
+// Debounce saves so rapid edits (typing names, etc.) don't flood the DB
+let saveTimer = null;
+function saveStateToDB(s) {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    try {
+      await supabase
+        .from('app_state')
+        .upsert({ id: DB_ROW_ID, data: s, updated_at: new Date().toISOString() });
+    } catch (e) {
+      console.error('Failed to save to Supabase:', e);
+    }
+  }, 400); // 400ms debounce
 }
 
 /* Seed state — small example so the app isn't empty on first load */
@@ -706,23 +758,67 @@ function seed() {
       { id: id(), name: 'Eli',      shuttlePaid: false, days: ['tue', 'wed'] },
       { id: id(), name: 'Farah',    shuttlePaid: true,  days: ['sat'] },
     ],
-    sessions: {}, // { 'YYYY-MM-DD': { courtHire: number, attendance: { personId: bool } } }
+    sessions: {},
     activeTab: 'sessions',
   };
 }
 
 /* ───── App ───── */
 function App() {
-  const [state, setState] = useState(() => loadState() || seed());
+  const [state, setState] = useState(null); // null = loading
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
-  const [tab, setTab] = useState(state.activeTab || 'sessions');
+  const [tab, setTab] = useState('sessions');
   const [newName, setNewName] = useState('');
   const newNameRef = useRef(null);
+  const skipNextRealtime = useRef(false); // avoid echo from our own saves
 
-  useEffect(() => { saveState({ ...state, activeTab: tab }); }, [state, tab]);
+  // Load initial data from Supabase
+  useEffect(() => {
+    loadStateFromDB().then(data => {
+      if (data) {
+        setState(data);
+        if (data.activeTab) setTab(data.activeTab);
+      } else {
+        // First time: seed and save
+        const initial = seed();
+        setState(initial);
+        saveStateToDB(initial);
+      }
+    });
+  }, []);
+
+  // Save to Supabase whenever state changes
+  useEffect(() => {
+    if (!state) return;
+    skipNextRealtime.current = true;
+    saveStateToDB({ ...state, activeTab: tab });
+  }, [state, tab]);
+
+  // Real-time subscription: listen for changes from OTHER users
+  useEffect(() => {
+    const channel = supabase
+      .channel('app_state_realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'app_state', filter: `id=eq.${DB_ROW_ID}` },
+        (payload) => {
+          if (skipNextRealtime.current) {
+            skipNextRealtime.current = false;
+            return;
+          }
+          if (payload.new && payload.new.data) {
+            setState(payload.new.data);
+            if (payload.new.data.activeTab) setTab(payload.new.data.activeTab);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   /* derived */
-  const peopleById = useMemo(() => Object.fromEntries(state.people.map(p => [p.id, p])), [state.people]);
+  const peopleById = useMemo(() => state ? Object.fromEntries(state.people.map(p => [p.id, p])) : {}, [state]);
   const todayIso = todayISO();
 
   /* mutators */
@@ -799,6 +895,18 @@ function App() {
   const prevWeek = () => setWeekStart(w => addDays(w, -7));
   const nextWeek = () => setWeekStart(w => addDays(w, 7));
   const isCurrentWeek = isoDate(weekStart) === isoDate(startOfWeek(new Date()));
+
+  // Loading screen while fetching from Supabase
+  if (!state) {
+    return (
+      <div className="app">
+        <div className="loading-screen">
+          <div className="spinner" />
+          <span>Loading from database…</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app">
@@ -947,7 +1055,6 @@ function DayCard({ di, allPeople, peopleById, isToday, isPast, onSetCourt, onTog
   const tag = isToday ? 'today' : (isPast ? 'past' : 'upcoming');
   const tagLabel = isToday ? 'Today' : (isPast ? 'Past' : di.date.toLocaleDateString(undefined, { weekday: 'short' }).toUpperCase());
 
-  // people not yet in roster (for quick-add)
   const eligibleToAdd = allPeople.filter(p => !p.days.includes(di.key));
 
   return (
