@@ -655,7 +655,7 @@
   <div id="root"></div>
 
   <!-- Supabase client library -->
-  <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
   <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
@@ -672,7 +672,12 @@ const { useState, useEffect, useMemo, useRef, useCallback } = React;
    ═══════════════════════════════════════════════ */
 const SUPABASE_URL = 'https://kgainkqtzfnejb1xdpzt.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_mdmTsB1sxdhKgXWYGPugaQ_xYgSzlBG'; // ← PASTE YOUR FULL KEY HERE
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// The UMD bundle may expose createClient at different paths depending on version
+const _sb = window.supabase;
+const createClient = _sb.createClient || (_sb.default && _sb.default.createClient) || (_sb.supabase && _sb.supabase.createClient);
+if (!createClient) { console.error('Supabase createClient not found!', _sb); }
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /* ───── Constants ───── */
 const DAYS = [
