@@ -1957,8 +1957,8 @@ function RosterView({ people, shuttlecocks, sessions, newName, setNewName, newNa
                   <button
                     className={`day-chip ${p.langdon ? 'on' : ''}`}
                     onClick={() => onToggleLangdon(p.id)}
-                    style={{ width: 'auto', padding: '4px 10px', fontSize: 11 }}
-                    data-tip={p.langdon ? 'Langdon — exempt from +$2' : 'Click to mark as Langdon (no +$2)'}
+                    style={{ width: 'auto', height: 'auto', padding: '5px 10px', fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 3 }}
+                    data-tip={p.langdon ? 'Exempt from +$2' : 'Mark exempt from +$2'}
                   >
                     {p.langdon ? '✓ Langdon' : 'Langdon'}
                   </button>
