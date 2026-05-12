@@ -85,6 +85,11 @@
       margin-top: -2px;
     }
 
+    .week-controls {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
     .week-nav {
       display: inline-flex;
       align-items: center;
@@ -114,17 +119,24 @@
     }
     .week-label .small { color: var(--ink-3); font-weight: 500; margin-left: 6px; }
     .today-pill {
-      margin-left: 6px;
-      padding: 6px 12px;
+      padding: 9px 16px;
       border-radius: 999px;
       background: var(--accent);
       color: var(--accent-ink);
-      border: 0;
+      border: 1px solid transparent;
       font-size: 12px;
       font-weight: 700;
       letter-spacing: 0.01em;
+      box-shadow: var(--shadow);
+      cursor: pointer;
     }
-    .today-pill:disabled { opacity: 0.4; cursor: default; }
+    .today-pill:hover:not(:disabled) { filter: brightness(0.96); }
+    .today-pill:disabled {
+      background: var(--surface);
+      color: var(--ink-3);
+      border-color: var(--line);
+      cursor: default;
+    }
 
     /* ───── Tabs (Sessions vs Roster) ───── */
     .tabs {
@@ -169,8 +181,168 @@
       grid-template-columns: repeat(3, 1fr);
       gap: 16px;
     }
+    .sessions.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 760px; }
+    .sessions.cols-1 { grid-template-columns: minmax(0, 380px); }
+    .sessions.cols-0 { grid-template-columns: 1fr; }
     @media (max-width: 980px) {
-      .sessions { grid-template-columns: 1fr; }
+      .sessions, .sessions.cols-2, .sessions.cols-1 { grid-template-columns: 1fr; max-width: none; }
+    }
+
+    .day-filters {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .day-filters-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      margin-right: 4px;
+    }
+    .day-filter-chip {
+      border: 1px solid var(--line-2);
+      background: var(--surface);
+      color: var(--ink-3);
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 999px;
+      letter-spacing: -0.005em;
+      transition: all 0.12s ease;
+    }
+    .day-filter-chip:hover { color: var(--ink); border-color: var(--ink-2); }
+    .day-filters-group { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .shuttles-header-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .status-filter {
+      display: inline-flex;
+      align-items: stretch;
+      background: var(--surface);
+      border: 1px solid var(--line-2);
+      border-radius: 999px;
+      padding: 3px;
+      gap: 2px;
+    }
+    .status-chip {
+      border: 0;
+      background: transparent;
+      color: var(--ink-3);
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: -0.005em;
+      padding: 5px 11px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.12s ease;
+      white-space: nowrap;
+    }
+    .status-chip:hover { color: var(--ink); }
+    .status-chip.on {
+      background: var(--ink);
+      color: white;
+    }
+    .filter-empty {
+      grid-column: 1 / -1;
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--ink-3);
+      font-size: 13px;
+      font-weight: 600;
+      background: var(--surface);
+      border: 1px dashed var(--line-2);
+      border-radius: 12px;
+    }
+    .roster-panel-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .bulk-shuttle-btn {
+      padding: 8px 14px;
+      border: 1px solid var(--ink);
+      background: var(--ink);
+      color: var(--accent);
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 12.5px;
+      letter-spacing: -0.005em;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .bulk-shuttle-btn:hover { background: #000; border-color: #000; }
+    .coverage-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: -0.005em;
+    }
+    .coverage-badge.on { background: #e8f5ec; color: #1f7a3a; }
+    .coverage-badge.off { background: #fff3e6; color: #b9551b; }
+    .owed-cell { padding-right: 16px !important; }
+    .owed-amount { color: var(--danger); font-weight: 700; }
+    .name-cell { display: flex; align-items: center; gap: 8px; }
+    .focus-dot {
+      width: 14px; height: 14px; border-radius: 50%;
+      border: 1.5px solid var(--line-2); background: transparent;
+      cursor: pointer; padding: 0; flex-shrink: 0;
+      transition: all 120ms ease;
+    }
+    .focus-dot:hover { border-color: var(--ink-2); background: var(--ink-4); }
+    .focus-dot.on { border-color: var(--ink); background: var(--ink); box-shadow: 0 0 0 3px rgba(0,0,0,0.08); }
+    .row-focused { background: #fafaf7; }
+    .row-dimmed { display: none; }
+    .focus-banner {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; padding: 10px 14px; margin-bottom: 12px;
+      background: #f7f7f2; border: 1px solid var(--line-2); border-radius: 8px;
+      font-size: 13px; color: var(--ink);
+    }
+    .focus-banner-clear {
+      border: 0; background: transparent; cursor: pointer;
+      font: inherit; color: var(--ink-2); font-weight: 600;
+      padding: 4px 8px; border-radius: 6px;
+    }
+    .focus-banner-clear:hover { background: var(--ink-4); color: var(--ink); }
+    .owed-btn { border: 0; background: transparent; padding: 4px 6px; cursor: pointer; font: inherit; border-radius: 6px; text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 3px; }
+    .owed-btn:hover { background: #fef0f0; }
+    .owed-popover { position: absolute; right: 12px; top: 100%; margin-top: 4px; background: var(--surface); border: 1px solid var(--line-2); border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.12); width: max-content; max-width: min(520px, calc(100vw - 48px)); z-index: 50; padding: 10px 14px; text-align: left; }
+    .owed-row { white-space: nowrap; }
+    .owed-popover-title { font-size: 11px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 8px; }
+    .owed-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 5px 0; border-top: 1px dashed var(--line); font-size: 13px; }
+    .owed-row:first-child { border-top: 0; }
+    .owed-row-label { color: var(--ink); font-weight: 600; }
+    .owed-row-amt { color: var(--ink); font-weight: 700; }
+    .owed-row-sur { color: var(--warn); font-weight: 600; font-size: 11.5px; margin-left: 4px; }
+    .owed-total { color: var(--danger); font-weight: 800; font-size: 14px; }
+    .owed-zero { color: var(--ink-3); }
+    .people-table th.right { text-align: right; padding-right: 16px; }
+    .shuttle-roster-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+    .day-action.danger {
+      color: var(--danger);
+      border-color: var(--line-2);
+    }
+    .day-action.danger:hover { border-color: var(--danger); background: #fef5f5; }
+    .day-filter-chip.on {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: var(--accent);
+    }
+    .sessions-empty {
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--ink-3);
+      font-size: 13px;
+      background: var(--surface);
+      border: 1px dashed var(--line-2);
+      border-radius: var(--radius);
     }
 
     .day-card {
@@ -178,7 +350,6 @@
       border: 1px solid var(--line);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-      overflow: hidden;
       display: flex;
       flex-direction: column;
     }
@@ -284,17 +455,50 @@
 
     .roster-item {
       display: grid;
-      grid-template-columns: 22px 1fr auto;
+      grid-template-columns: 22px 1fr auto 26px;
       align-items: center;
       gap: 10px;
       padding: 8px 18px;
       border-bottom: 1px dashed var(--line);
+    }
+    .pay-check {
+      width: 26px; height: 26px;
+      padding: 0;
+      border-radius: 999px;
+      border: 1.5px dashed var(--line-2);
+      background: var(--surface);
+      color: var(--ink-3);
+      display: grid; place-items: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.12s ease;
+      padding: 0;
+    }
+    .pay-check:hover:not(:disabled) { border-color: var(--ink); color: var(--ink); border-style: solid; }
+    .pay-check.on {
+      background: var(--accent);
+      border-color: var(--accent);
+      border-style: solid;
+      color: var(--accent-ink);
+    }
+    .pay-check.on svg { width: 13px; height: 13px; }
+    .pay-check:disabled { opacity: 0.35; cursor: not-allowed; }
+    .pay-check .pay-dash { line-height: 1; }
+    .roster-item.is-paid .person-cost,
+    .roster-item.is-paid .person-cost .surcharge {
+      color: var(--accent-ink);
+      text-decoration: line-through;
+      text-decoration-thickness: 1.5px;
+      text-decoration-color: color-mix(in oklab, var(--accent-ink) 60%, transparent);
     }
     .roster-item:last-child { border-bottom: 0; }
     .roster-item.attended { background: var(--accent-soft); }
 
     .check {
       width: 22px; height: 22px;
+      padding: 0;
       border-radius: 7px;
       border: 1.5px solid var(--line-2);
       background: var(--surface);
@@ -549,8 +753,212 @@
     .ws-spacer { flex: 1; }
     .ws-note { font-size: 12px; color: var(--ink-3); }
 
-    /* small reset */
-    h1, h2, h3 { margin: 0; }
+    /* ───── Shuttlecocks ───── */
+    .budget-card {
+      background: var(--ink);
+      color: var(--bg);
+      border-radius: var(--radius);
+      padding: 18px 22px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      box-shadow: var(--shadow);
+    }
+    .budget-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .budget-sub {
+      font-size: 12px;
+      color: var(--ink-3);
+      margin-top: 2px;
+    }
+    .budget-amount {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--accent);
+    }
+    .shuttles-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .add-shuttle-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 14px;
+      border-radius: 999px;
+      border: 0;
+      background: var(--ink);
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: -0.005em;
+      box-shadow: var(--shadow);
+    }
+    .add-shuttle-btn:hover { background: #000; }
+    .shuttles-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 980px) { .shuttles-grid { grid-template-columns: 1fr; } }
+    .shuttle-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+    }
+    .shuttle-head {
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .shuttle-fields { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .shuttle-name {
+      border: 0;
+      background: transparent;
+      font: inherit;
+      font-weight: 800;
+      font-size: 17px;
+      letter-spacing: -0.015em;
+      padding: 4px 6px;
+      margin: -4px -6px 0;
+      border-radius: 6px;
+      outline: none;
+      width: 100%;
+      resize: none;
+      overflow: hidden;
+      line-height: 1.25;
+      field-sizing: content;
+      min-height: 1.6em;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+    .shuttle-name:hover { background: var(--bg); }
+    .shuttle-name:focus { background: var(--bg-2); box-shadow: 0 0 0 2px var(--accent); }
+    .shuttle-name::placeholder { color: var(--ink-3); font-weight: 600; }
+    .shuttle-date {
+      border: 0;
+      background: transparent;
+      font: inherit;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--ink-3);
+      padding: 2px 6px;
+      margin: 0 -6px;
+      border-radius: 6px;
+      outline: none;
+      width: fit-content;
+      max-width: 100%;
+    }
+    .shuttle-date:hover { background: var(--bg); color: var(--ink-2); }
+    .shuttle-date:focus { background: var(--bg-2); box-shadow: 0 0 0 2px var(--accent); color: var(--ink); }
+    .shuttle-remove { flex-shrink: 0; }
+    .shuttles-empty {
+      padding: 60px 20px;
+      text-align: center;
+      background: var(--surface);
+      border: 1px dashed var(--line-2);
+      border-radius: var(--radius);
+    }
+    .shuttles-empty-icon { color: var(--ink-3); margin-bottom: 10px; display: inline-block; }
+    .surcharge-row {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .surcharge-info-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+    }
+    .surcharge-info-amount {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--warn);
+      margin-top: 1px;
+    }
+    .surcharge-btn {
+      padding: 7px 12px;
+      border: 0;
+      background: var(--ink);
+      color: var(--accent);
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: -0.005em;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .surcharge-btn:hover:not(:disabled) { background: #000; }
+    .surcharge-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .surcharge-btn.clear {
+      background: transparent;
+      color: var(--ink-2);
+      border: 1px solid var(--line-2);
+    }
+    .surcharge-btn.clear:hover { border-color: var(--ink); color: var(--ink); }
+
+    /* Fully paid state */
+    .day-card.is-fully-paid,
+    .shuttle-card.is-fully-paid {
+      position: relative;
+      background: #f0faf2;
+      border-color: #b8e0c2;
+      box-shadow: 0 1px 0 rgba(34, 139, 67, 0.06), 0 6px 18px rgba(34, 139, 67, 0.08);
+    }
+    .day-card.is-fully-paid .day-head,
+    .day-card.is-fully-paid .court-row,
+    .day-card.is-fully-paid .day-foot,
+    .shuttle-card.is-fully-paid .shuttle-head,
+    .shuttle-card.is-fully-paid .court-row,
+    .shuttle-card.is-fully-paid .surcharge-row,
+    .shuttle-card.is-fully-paid .day-foot {
+      background: rgba(186, 230, 196, 0.18);
+      border-color: #d4ead9;
+    }
+    .day-card.is-fully-paid .roster-item,
+    .shuttle-card.is-fully-paid .roster-item {
+      background: transparent;
+      border-color: #d4ead9;
+    }
+    .fully-paid-banner {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      z-index: 5;
+      padding: 5px 10px;
+      background: #22863a;
+      color: white;
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(34, 134, 58, 0.25);
+      pointer-events: none;
+    }
+    .day-card.is-fully-paid .day-head .actions,
+    .shuttle-card.is-fully-paid .shuttle-head .icon-btn { margin-right: 88px; }
 
     /* helper: tooltip */
     [data-tip] { position: relative; }
@@ -621,42 +1029,13 @@
       color: var(--accent-ink);
     }
     .pay-pill.zero { background: var(--bg-2); color: var(--ink-3); }
-
-    /* ───── Loading & sync indicator ───── */
-    .loading-screen {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 120px 20px;
-      color: var(--ink-3);
-      gap: 12px;
-    }
-    .loading-screen .spinner {
-      width: 28px; height: 28px;
-      border: 3px solid var(--line);
-      border-top-color: var(--ink);
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-    }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .sync-dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: var(--accent);
-      display: inline-block;
-      margin-right: 6px;
-      vertical-align: middle;
-    }
-    .sync-dot.offline { background: var(--danger); }
   </style>
 </head>
 <body>
   <div id="root"></div>
 
-  <!-- Supabase client library -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-
   <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
@@ -665,19 +1044,16 @@
 /* Badminton Tracker — single-file React app
    Data persists to Supabase (shared across all users). */
 
-const { useState, useEffect, useMemo, useRef, useCallback } = React;
+const { useState, useEffect, useMemo, useRef } = React;
 
-/* ═══════════════════════════════════════════════
-   ▸ SUPABASE CONFIG — paste your real values here
-   ═══════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════ */
 const SUPABASE_URL = 'https://kgainkqtzfnejbixdpzt.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtnYWlua3F0emZuZWpiaXhkcHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzOTQ1MzIsImV4cCI6MjA5Mzk3MDUzMn0.NF6-ro2USBWzo2Gpujd4oQTpPbxlK8ICBoSSKAjgiu0';
-
-// The UMD bundle may expose createClient at different paths depending on version
 const _sb = window.supabase;
-const createClient = _sb.createClient || (_sb.default && _sb.default.createClient) || (_sb.supabase && _sb.supabase.createClient);
-if (!createClient) { console.error('Supabase createClient not found!', _sb); }
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const _createClient = _sb.createClient || (_sb.default && _sb.default.createClient) || (_sb.supabase && _sb.supabase.createClient);
+const supabase = _createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const DB_ROW_ID = 'shared';
+/* ═══════════════════════════════════════════════ */
 
 /* ───── Constants ───── */
 const DAYS = [
@@ -686,16 +1062,38 @@ const DAYS = [
   { key: 'sat', label: 'Saturday',  short: 'Sat', dow: 6 },
 ];
 const SHUTTLE_SURCHARGE = 2;
-const DB_ROW_ID = 'shared'; // single shared row in the app_state table
+
+/**
+ * Is the given person "shuttle-covered" on the given session date?
+ * Rule: look at all shuttlecock cards with date <= sessionDate; pick the most
+ * recent one (ties broken by later array position). If that card's personIds
+ * includes the person, they're covered — no +$2 surcharge for this session.
+ */
+function isCoveredOn(personId, sessionDateISO, shuttlecocks) {
+  if (!shuttlecocks || shuttlecocks.length === 0 || !sessionDateISO) return false;
+  let latest = null;
+  let latestIdx = -1;
+  shuttlecocks.forEach((s, idx) => {
+    if (!s.date || s.date > sessionDateISO) return;
+    if (!latest || s.date > latest.date || (s.date === latest.date && idx > latestIdx)) {
+      latest = s;
+      latestIdx = idx;
+    }
+  });
+  if (!latest) return false;
+  const ids = latest.personIds || [];
+  return ids.includes(personId);
+}
 
 /* ───── Date utils ───── */
 const pad = (n) => String(n).padStart(2, '0');
 const isoDate = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const todayISO = () => isoDate(new Date());
 function startOfWeek(d) {
+  // Monday-start week
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
-  const day = x.getDay();
+  const day = x.getDay(); // 0=Sun
   const diff = (day === 0 ? -6 : 1 - day);
   x.setDate(x.getDate() + diff);
   return x;
@@ -706,6 +1104,7 @@ function addDays(d, n) {
   return x;
 }
 function dateForDayOfWeek(weekStart, dow) {
+  // weekStart = Monday; dow as JS getDay()
   const offset = dow === 0 ? 6 : dow - 1;
   return addDays(weekStart, offset);
 }
@@ -714,49 +1113,32 @@ function fmtMonthDay(d) {
 }
 function fmtWeekRange(start) {
   const end = addDays(start, 6);
-  const startStr = start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const sameMonth = start.getMonth() === end.getMonth();
+  const startStr = sameMonth
+    ? start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+    : start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   const endStr = end.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
   return `${startStr} – ${endStr}`;
 }
-const money = (n) => `${(Math.round(n * 100) / 100).toFixed(2)}`;
+const money = (n) => `$${(Math.round(n * 100) / 100).toFixed(2)}`;
 
 /* ───── Supabase Persistence ───── */
 async function loadStateFromDB() {
   try {
-    const { data, error } = await supabase
-      .from('app_state')
-      .select('data')
-      .eq('id', DB_ROW_ID)
-      .single();
-    console.log('Supabase load result:', { data, error });
-    if (error) {
-      // PGRST116 = row not found, that's fine (first load)
-      if (error.code === 'PGRST116') return null;
-      console.error('Supabase load error:', error);
-      return null;
-    }
+    const { data, error } = await supabase.from('app_state').select('data').eq('id', DB_ROW_ID).single();
+    if (error) { if (error.code === 'PGRST116') return null; console.error('Load error:', error); return null; }
     return data ? data.data : null;
-  } catch (e) {
-    console.error('Failed to load from Supabase:', e);
-    return null;
-  }
+  } catch (e) { console.error('Load failed:', e); return null; }
 }
-
-// Debounce saves so rapid edits (typing names, etc.) don't flood the DB
-let saveTimer = null;
+let _saveTimer = null;
 function saveStateToDB(s) {
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(async () => {
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(async () => {
     try {
-      const { error } = await supabase
-        .from('app_state')
-        .upsert({ id: DB_ROW_ID, data: s, updated_at: new Date().toISOString() });
-      if (error) console.error('Supabase save error:', error);
-      else console.log('Saved to Supabase OK');
-    } catch (e) {
-      console.error('Failed to save to Supabase:', e);
-    }
-  }, 400); // 400ms debounce
+      const { error } = await supabase.from('app_state').upsert({ id: DB_ROW_ID, data: s, updated_at: new Date().toISOString() });
+      if (error) console.error('Save error:', error); else console.log('Saved to Supabase OK');
+    } catch (e) { console.error('Save failed:', e); }
+  }, 400);
 }
 
 /* Seed state — small example so the app isn't empty on first load */
@@ -771,29 +1153,29 @@ function seed() {
       { id: id(), name: 'Eli',      shuttlePaid: false, days: ['tue', 'wed'] },
       { id: id(), name: 'Farah',    shuttlePaid: true,  days: ['sat'] },
     ],
-    sessions: {},
+    sessions: {}, // { 'YYYY-MM-DD': { courtHire: number, attendance: { personId: bool }, payments: { personId: bool } } }
+    shuttlecocks: [], // [{ id, name, date, payments: { personId: bool } }]
     activeTab: 'sessions',
   };
 }
 
 /* ───── App ───── */
 function App() {
-  const [state, setState] = useState(null); // null = loading
+  const [state, setState] = useState(null);
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
   const [tab, setTab] = useState('sessions');
   const [newName, setNewName] = useState('');
   const newNameRef = useRef(null);
-  const skipNextRealtime = useRef(false); // avoid echo from our own saves
-  const loaded = useRef(false); // track whether initial load is done
+  const skipNextRealtime = useRef(false);
+  const loaded = useRef(false);
 
-  // Load initial data from Supabase
+  // Load from Supabase on mount
   useEffect(() => {
     loadStateFromDB().then(data => {
       if (data) {
         setState(data);
         if (data.activeTab) setTab(data.activeTab);
       } else {
-        // First time: seed and save
         const initial = seed();
         setState(initial);
         saveStateToDB(initial);
@@ -802,43 +1184,74 @@ function App() {
     });
   }, []);
 
-  // Save to Supabase whenever state changes (but not before initial load)
+  // Save to Supabase on state change
   useEffect(() => {
     if (!state || !loaded.current) return;
     skipNextRealtime.current = true;
     saveStateToDB({ ...state, activeTab: tab });
   }, [state, tab]);
 
-  // Real-time subscription: listen for changes from OTHER users
+  // Realtime subscription
   useEffect(() => {
     const channel = supabase
       .channel('app_state_realtime')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'app_state', filter: `id=eq.${DB_ROW_ID}` },
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_state', filter: `id=eq.${DB_ROW_ID}` },
         (payload) => {
-          if (skipNextRealtime.current) {
-            skipNextRealtime.current = false;
-            return;
-          }
+          if (skipNextRealtime.current) { skipNextRealtime.current = false; return; }
           if (payload.new && payload.new.data) {
             setState(payload.new.data);
             if (payload.new.data.activeTab) setTab(payload.new.data.activeTab);
           }
         }
-      )
-      .subscribe();
-
+      ).subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
 
   /* derived */
-  const peopleById = useMemo(() => state ? Object.fromEntries(state.people.map(p => [p.id, p])) : {}, [state]);
+  const peopleById = useMemo(() => Object.fromEntries(state.people.map(p => [p.id, p])), [state.people]);
   const todayIso = todayISO();
 
   /* mutators */
   const updatePeople = (fn) => setState(s => ({ ...s, people: fn(s.people) }));
   const updateSessions = (fn) => setState(s => ({ ...s, sessions: fn(s.sessions) }));
+  const updateShuttlecocks = (fn) => setState(s => ({ ...s, shuttlecocks: fn(s.shuttlecocks || []) }));
+
+  /* ── Shuttlecock mutators ── */
+  function addShuttlecock() {
+    const id = Math.random().toString(36).slice(2, 10);
+    const today = isoDate(new Date());
+    updateShuttlecocks(arr => [...arr, { id, name: '', date: today, cost: 0, payments: {}, personIds: state.people.map(p => p.id) }]);
+  }
+  function removeShuttlecock(id) {
+    updateShuttlecocks(arr => arr.filter(s => s.id !== id));
+  }
+  function updateShuttlecockField(id, field, value) {
+    updateShuttlecocks(arr => arr.map(s => s.id === id ? { ...s, [field]: value } : s));
+  }
+  function toggleShuttlecockPayment(id, personId) {
+    updateShuttlecocks(arr => arr.map(s => {
+      if (s.id !== id) return s;
+      const pay = { ...(s.payments || {}) };
+      pay[personId] = !pay[personId];
+      return { ...s, payments: pay };
+    }));
+  }
+  function addPersonToShuttlecock(id, personId) {
+    updateShuttlecocks(arr => arr.map(s => {
+      if (s.id !== id) return s;
+      const cur = s.personIds || [];
+      if (cur.includes(personId)) return s;
+      return { ...s, personIds: [...cur, personId] };
+    }));
+  }
+  function removePersonFromShuttlecock(id, personId) {
+    updateShuttlecocks(arr => arr.map(s => {
+      if (s.id !== id) return s;
+      const cur = s.personIds || [];
+      const { [personId]: _, ...rest } = s.payments || {};
+      return { ...s, personIds: cur.filter(pid => pid !== personId), payments: rest };
+    }));
+  }
 
   function ensureSession(date) {
     if (!state.sessions[date]) {
@@ -855,10 +1268,21 @@ function App() {
   }
   function toggleAttendance(date, personId) {
     updateSessions(ss => {
-      const cur = ss[date] || { courtHire: 0, attendance: {} };
+      const cur = ss[date] || { courtHire: 0, attendance: {}, payments: {} };
       const att = { ...cur.attendance };
       att[personId] = !att[personId];
-      return { ...ss, [date]: { ...cur, attendance: att } };
+      const pay = { ...(cur.payments || {}) };
+      // if no longer attending, clear paid flag
+      if (!att[personId]) delete pay[personId];
+      return { ...ss, [date]: { ...cur, attendance: att, payments: pay } };
+    });
+  }
+  function togglePayment(date, personId) {
+    updateSessions(ss => {
+      const cur = ss[date] || { courtHire: 0, attendance: {}, payments: {} };
+      const pay = { ...(cur.payments || {}) };
+      pay[personId] = !pay[personId];
+      return { ...ss, [date]: { ...cur, payments: pay, attendance: cur.attendance || {} } };
     });
   }
   function markAllAttended(date, personIds, value) {
@@ -887,12 +1311,19 @@ function App() {
       }
       return out;
     });
+    updateShuttlecocks(arr => arr.map(s => {
+      const { [id]: _, ...rest } = s.payments || {};
+      return { ...s, payments: rest };
+    }));
   }
   function renamePerson(id, name) {
     updatePeople(ps => ps.map(p => p.id === id ? { ...p, name } : p));
   }
   function toggleShuttle(id) {
     updatePeople(ps => ps.map(p => p.id === id ? { ...p, shuttlePaid: !p.shuttlePaid } : p));
+  }
+  function setAllShuttle(paid) {
+    updatePeople(ps => ps.map(p => ({ ...p, shuttlePaid: paid })));
   }
   function togglePersonDay(id, dayKey) {
     updatePeople(ps => ps.map(p => {
@@ -903,6 +1334,13 @@ function App() {
   }
   function addPersonToDay(personId, dayKey) {
     togglePersonDay(personId, dayKey);
+  }
+  function toggleDayVisibility(dayKey) {
+    setState(s => {
+      const hidden = s.hiddenDays || [];
+      const has = hidden.includes(dayKey);
+      return { ...s, hiddenDays: has ? hidden.filter(d => d !== dayKey) : [...hidden, dayKey] };
+    });
   }
 
   /* week navigation */
@@ -915,9 +1353,9 @@ function App() {
   if (!state) {
     return (
       <div className="app">
-        <div className="loading-screen">
-          <div className="spinner" />
-          <span>Loading from database…</span>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '120px 20px', color: 'var(--ink-3)', gap: 12 }}>
+          <div style={{ width: 28, height: 28, border: '3px solid var(--line)', borderTopColor: 'var(--ink)', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+          <span>Loading…</span>
         </div>
       </div>
     );
@@ -934,17 +1372,19 @@ function App() {
           </div>
         </div>
 
-        <div className="week-nav" role="group" aria-label="Week navigation">
-          <button onClick={prevWeek} aria-label="Previous week" data-tip="Previous week">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-          </button>
-          <div className="week-label mono">
-            {fmtWeekRange(weekStart)}
-            {isCurrentWeek && <span className="small">this week</span>}
+        <div className="week-controls">
+          <div className="week-nav" role="group" aria-label="Week navigation">
+            <button onClick={prevWeek} aria-label="Previous week" data-tip="Previous week">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <div className="week-label mono">
+              {fmtWeekRange(weekStart)}
+              {isCurrentWeek && <span className="small">this week</span>}
+            </div>
+            <button onClick={nextWeek} aria-label="Next week" data-tip="Next week">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
           </div>
-          <button onClick={nextWeek} aria-label="Next week" data-tip="Next week">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
           <button className="today-pill" onClick={goToToday} disabled={isCurrentWeek}>Today</button>
         </div>
       </header>
@@ -956,6 +1396,9 @@ function App() {
         <button className={`tab ${tab === 'roster' ? 'active' : ''}`} onClick={() => setTab('roster')} role="tab">
           People <span className="count mono">{state.people.length}</span>
         </button>
+        <button className={`tab ${tab === 'shuttles' ? 'active' : ''}`} onClick={() => setTab('shuttles')} role="tab">
+          Shuttlecocks <span className="count mono">{(state.shuttlecocks || []).length}</span>
+        </button>
       </div>
 
       {tab === 'sessions' && (
@@ -963,18 +1406,24 @@ function App() {
           weekStart={weekStart}
           state={state}
           peopleById={peopleById}
+          shuttlecocks={state.shuttlecocks || []}
           todayIso={todayIso}
           onSetCourt={setCourtHire}
           onToggleAtt={toggleAttendance}
+          onTogglePay={togglePayment}
           onMarkAll={markAllAttended}
           onAddPersonToDay={addPersonToDay}
           onSwitchToRoster={() => setTab('roster')}
+          hiddenDays={state.hiddenDays || []}
+          onToggleDayVisibility={toggleDayVisibility}
         />
       )}
 
       {tab === 'roster' && (
         <RosterView
           people={state.people}
+          shuttlecocks={state.shuttlecocks || []}
+          sessions={state.sessions || {}}
           newName={newName}
           setNewName={setNewName}
           newNameRef={newNameRef}
@@ -982,16 +1431,57 @@ function App() {
           onRemove={removePerson}
           onRename={renamePerson}
           onToggleShuttle={toggleShuttle}
+          onSetAllShuttle={setAllShuttle}
           onToggleDay={togglePersonDay}
+        />
+      )}
+
+      {tab === 'shuttles' && (
+        <ShuttlecocksView
+          shuttlecocks={state.shuttlecocks || []}
+          people={state.people}
+          sessions={state.sessions}
+          onAdd={addShuttlecock}
+          onRemove={removeShuttlecock}
+          onUpdate={updateShuttlecockField}
+          onTogglePayment={toggleShuttlecockPayment}
+          onAddPerson={addPersonToShuttlecock}
+          onRemovePerson={removePersonFromShuttlecock}
         />
       )}
     </div>
   );
 }
 
+/* ───── Status filter (All / Paid / Unpaid) ───── */
+function StatusFilter({ value, onChange }) {
+  const opts = [
+    { key: 'all', label: 'All' },
+    { key: 'unpaid', label: 'Outstanding' },
+    { key: 'paid', label: 'Fully paid' },
+  ];
+  return (
+    <div className="status-filter" role="radiogroup" aria-label="Filter by payment status">
+      {opts.map(o => (
+        <button
+          key={o.key}
+          className={`status-chip ${value === o.key ? 'on' : ''}`}
+          onClick={() => onChange(o.key)}
+          role="radio"
+          aria-checked={value === o.key}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 /* ───── Sessions view ───── */
-function SessionsView({ weekStart, state, peopleById, todayIso, onSetCourt, onToggleAtt, onMarkAll, onAddPersonToDay, onSwitchToRoster }) {
-  const dayInfos = DAYS.map(d => {
+function SessionsView({ weekStart, state, peopleById, shuttlecocks, todayIso, onSetCourt, onToggleAtt, onTogglePay, onMarkAll, onAddPersonToDay, onSwitchToRoster, hiddenDays, onToggleDayVisibility }) {
+  const [statusFilter, setStatusFilter] = React.useState('all'); // 'all' | 'paid' | 'unpaid'
+  const visibleDays = DAYS.filter(d => !hiddenDays.includes(d.key));
+  const dayInfos = visibleDays.map(d => {
     const date = dateForDayOfWeek(weekStart, d.dow);
     const iso = isoDate(date);
     const session = state.sessions[iso] || { courtHire: 0, attendance: {} };
@@ -999,27 +1489,68 @@ function SessionsView({ weekStart, state, peopleById, todayIso, onSetCourt, onTo
     const attendees = roster.filter(p => session.attendance[p.id]);
     const baseSplit = attendees.length > 0 && session.courtHire > 0
       ? session.courtHire / attendees.length : 0;
-    const total = attendees.reduce((sum, p) => sum + baseSplit + (p.shuttlePaid ? 0 : SHUTTLE_SURCHARGE), 0);
-    return { ...d, date, iso, session, roster, attendees, baseSplit, total };
+    const total = attendees.length > 0 ? (Number(session.courtHire) || 0) : 0;
+    const surchargeCount = attendees.filter(p => !isCoveredOn(p.id, iso, shuttlecocks)).length;
+    const surchargeTotal = surchargeCount * SHUTTLE_SURCHARGE;
+    const payments = session.payments || {};
+    const paidAttendees = attendees.filter(p => payments[p.id]);
+    const paidCount = paidAttendees.length;
+    const paidAmount = paidAttendees.reduce((sum, p) => sum + baseSplit, 0);
+    return { ...d, date, iso, session, roster, attendees, baseSplit, total, paidCount, paidAmount, surchargeCount, surchargeTotal };
+  });
+
+  const filteredDayInfos = dayInfos.filter(di => {
+    if (statusFilter === 'all') return true;
+    const isFullyPaid = di.attendees.length > 0 && di.paidCount === di.attendees.length;
+    if (statusFilter === 'paid') return isFullyPaid;
+    if (statusFilter === 'unpaid') return di.attendees.length > 0 && !isFullyPaid;
+    return true;
   });
 
   const weekTotal = dayInfos.reduce((s, di) => s + di.total, 0);
   const weekCourt = dayInfos.reduce((s, di) => s + (di.attendees.length > 0 ? Number(di.session.courtHire) || 0 : 0), 0);
   const weekAttendees = dayInfos.reduce((s, di) => s + di.attendees.length, 0);
+  const weekSurcharge = dayInfos.reduce((s, di) => s + (di.surchargeTotal || 0), 0);
+  const weekSurchargeCount = dayInfos.reduce((s, di) => s + (di.surchargeCount || 0), 0);
 
   return (
     <>
-      <div className="sessions">
-        {dayInfos.map(di => (
+      <div className="day-filters">
+        <div className="day-filters-group">
+          <span className="day-filters-label">Show</span>
+          {DAYS.map(d => {
+            const on = !hiddenDays.includes(d.key);
+            return (
+              <button
+                key={d.key}
+                className={`day-filter-chip ${on ? 'on' : ''}`}
+                onClick={() => onToggleDayVisibility(d.key)}
+                aria-pressed={on}
+              >
+                {d.label}
+              </button>
+            );
+          })}
+        </div>
+        <StatusFilter value={statusFilter} onChange={setStatusFilter} />
+      </div>
+      <div className={`sessions cols-${Math.max(1, filteredDayInfos.length)}`}>
+        {filteredDayInfos.length === 0 ? (
+          <div className="filter-empty">
+            {statusFilter === 'paid' ? 'No fully-paid sessions this week.' : 'No outstanding sessions this week.'}
+          </div>
+        ) : filteredDayInfos.map(di => (
           <DayCard
             key={di.iso}
             di={di}
             allPeople={state.people}
             peopleById={peopleById}
+            shuttlecocks={shuttlecocks}
             isToday={di.iso === todayIso}
             isPast={di.iso < todayIso}
             onSetCourt={onSetCourt}
             onToggleAtt={onToggleAtt}
+            onTogglePay={onTogglePay}
             onMarkAll={onMarkAll}
             onAddPersonToDay={onAddPersonToDay}
             onSwitchToRoster={onSwitchToRoster}
@@ -1040,15 +1571,21 @@ function SessionsView({ weekStart, state, peopleById, todayIso, onSetCourt, onTo
           <span className="label">Player-sessions</span>
           <span className="value mono">{weekAttendees}</span>
         </div>
+        {weekSurchargeCount > 0 && (
+          <div className="ws-item">
+            <span className="label" style={{ color: 'var(--warn)' }}>incl. +${SHUTTLE_SURCHARGE} × {weekSurchargeCount}</span>
+            <span className="value mono" style={{ color: 'var(--warn)' }}>+{money(weekSurcharge)}</span>
+          </div>
+        )}
         <div className="ws-spacer" />
-        <div className="ws-note mono">+{money(SHUTTLE_SURCHARGE)} shuttle surcharge applies to anyone marked unpaid</div>
+        <div className="ws-note mono">+{money(SHUTTLE_SURCHARGE)} shuttle surcharge applies on sessions not covered by a shuttlecock card</div>
       </div>
     </>
   );
 }
 
 /* ───── Day card ───── */
-function DayCard({ di, allPeople, peopleById, isToday, isPast, onSetCourt, onToggleAtt, onMarkAll, onAddPersonToDay, onSwitchToRoster }) {
+function DayCard({ di, allPeople, peopleById, shuttlecocks, isToday, isPast, onSetCourt, onToggleAtt, onTogglePay, onMarkAll, onAddPersonToDay, onSwitchToRoster }) {
   const [courtStr, setCourtStr] = useState(String(di.session.courtHire || ''));
   const [showAdd, setShowAdd] = useState(false);
 
@@ -1063,6 +1600,7 @@ function DayCard({ di, allPeople, peopleById, isToday, isPast, onSetCourt, onTog
   };
 
   const allOn = di.roster.length > 0 && di.attendees.length === di.roster.length;
+  const fullyPaid = di.attendees.length > 0 && di.paidCount === di.attendees.length;
   const handleToggleAll = () => {
     onMarkAll(di.iso, di.roster.map(p => p.id), !allOn);
   };
@@ -1070,10 +1608,12 @@ function DayCard({ di, allPeople, peopleById, isToday, isPast, onSetCourt, onTog
   const tag = isToday ? 'today' : (isPast ? 'past' : 'upcoming');
   const tagLabel = isToday ? 'Today' : (isPast ? 'Past' : di.date.toLocaleDateString(undefined, { weekday: 'short' }).toUpperCase());
 
+  // people not yet in roster (for quick-add)
   const eligibleToAdd = allPeople.filter(p => !p.days.includes(di.key));
 
   return (
-    <section className={`day-card ${isToday ? 'is-today' : ''} ${isPast ? 'is-past' : ''}`} data-screen-label={`${di.label} ${di.iso}`}>
+    <section className={`day-card ${isToday ? 'is-today' : ''} ${isPast ? 'is-past' : ''} ${fullyPaid ? 'is-fully-paid' : ''}`} data-screen-label={`${di.label} ${di.iso}`}>
+      {fullyPaid && <div className="fully-paid-banner">FULLY PAID</div>}
       <div className="day-head">
         <div>
           <div className="day-name">{di.label}</div>
@@ -1101,7 +1641,66 @@ function DayCard({ di, allPeople, peopleById, isToday, isPast, onSetCourt, onTog
       </div>
 
       {di.roster.length > 0 && (
-        <div className="day-actions">
+        <div className="court-row" style={{ display: 'none' }}/>
+      )}
+
+      <ul className="roster-list">
+        {di.roster.length === 0 && (
+          <li className="roster-empty">
+            No one on the {di.label} roster yet.<br/>
+            <button onClick={onSwitchToRoster}>Manage people →</button>
+          </li>
+        )}
+        {di.roster.map(p => {
+          const attended = !!di.session.attendance[p.id];
+          const paid = !!(di.session.payments && di.session.payments[p.id]);
+          const covered = isCoveredOn(p.id, di.iso, shuttlecocks);
+          const personCost = attended ? di.baseSplit + (covered ? 0 : SHUTTLE_SURCHARGE) : 0;
+          return (
+            <li key={p.id} className={`roster-item ${attended ? 'attended' : ''} ${paid ? 'is-paid' : ''}`}>
+              <button
+                className={`check ${attended ? 'on' : ''}`}
+                onClick={() => onToggleAtt(di.iso, p.id)}
+                aria-pressed={attended}
+                aria-label={`Toggle attendance for ${p.name}`}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </button>
+              <div className={`person-name ${attended ? '' : 'dim'}`}>
+                {p.name}
+                {!covered && (
+                  <span className="shuttle-flag" data-tip="No active shuttlecock coverage · +$2 surcharge">
+                    +$2
+                  </span>
+                )}
+              </div>
+              <div className={`person-cost ${attended ? '' : 'dim'}`}>
+                {attended ? money(personCost) : '—'}
+                {attended && !covered && <span className="surcharge">incl. +${SHUTTLE_SURCHARGE}</span>}
+              </div>
+              <button
+                className={`pay-check ${paid ? 'on' : ''} ${attended ? '' : 'muted'}`}
+                onClick={() => onTogglePay(di.iso, p.id)}
+                aria-pressed={paid}
+                disabled={!attended}
+                data-tip={!attended ? 'Mark attended first' : (paid ? 'Paid · click to unmark' : 'Mark as paid')}
+                aria-label={`Toggle paid for ${p.name}`}
+              >
+                {paid ? (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                ) : (
+                  <span className="pay-dash">$</span>
+                )}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+
+      {di.roster.length > 0 && (
+        <div className="day-actions" style={{ borderTop: '1px solid var(--line)', borderBottom: 0 }}>
           <button className="day-action" onClick={handleToggleAll}>
             {allOn ? 'Clear attendance' : 'Mark all attended'}
           </button>
@@ -1122,52 +1721,21 @@ function DayCard({ di, allPeople, peopleById, isToday, isPast, onSetCourt, onTog
         </div>
       )}
 
-      <ul className="roster-list">
-        {di.roster.length === 0 && (
-          <li className="roster-empty">
-            No one on the {di.label} roster yet.<br/>
-            <button onClick={onSwitchToRoster}>Manage people →</button>
-          </li>
-        )}
-        {di.roster.map(p => {
-          const attended = !!di.session.attendance[p.id];
-          const personCost = attended ? di.baseSplit + (p.shuttlePaid ? 0 : SHUTTLE_SURCHARGE) : 0;
-          return (
-            <li key={p.id} className={`roster-item ${attended ? 'attended' : ''}`}>
-              <button
-                className={`check ${attended ? 'on' : ''}`}
-                onClick={() => onToggleAtt(di.iso, p.id)}
-                aria-pressed={attended}
-                aria-label={`Toggle attendance for ${p.name}`}
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-              </button>
-              <div className={`person-name ${attended ? '' : 'dim'}`}>
-                {p.name}
-                {!p.shuttlePaid && (
-                  <span className="shuttle-flag" data-tip="Shuttle cost unpaid · +$2 surcharge">
-                    +$2
-                  </span>
-                )}
-              </div>
-              <div className={`person-cost ${attended ? '' : 'dim'}`}>
-                {attended ? money(personCost) : '—'}
-                {attended && !p.shuttlePaid && <span className="surcharge">incl. +${SHUTTLE_SURCHARGE}</span>}
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-
       <div className="day-foot">
         <span className="label">Attendees</span>
-        <span className="value mono">{di.attendees.length} / {di.roster.length}</span>
+        <span className="value mono">{di.attendees.length}</span>
         <span className="label">Base split</span>
         <span className="value mono">{di.attendees.length > 0 && di.session.courtHire > 0 ? money(di.baseSplit) : '—'}</span>
+        <span className="label">Paid</span>
+        <span className="value mono">{di.paidCount} / {di.attendees.length} · {money(di.paidAmount)}</span>
         <span className="label">Day total</span>
         <span className="value big mono">{money(di.total)}</span>
+        {di.surchargeCount > 0 && (
+          <>
+            <span className="label" style={{ color: 'var(--warn)' }}>incl. +${SHUTTLE_SURCHARGE} × {di.surchargeCount}</span>
+            <span className="value mono" style={{ color: 'var(--warn)' }}>+{money(di.surchargeTotal)}</span>
+          </>
+        )}
       </div>
     </section>
   );
@@ -1217,8 +1785,84 @@ function QuickAddDropdown({ people, onPick, onClose }) {
   );
 }
 
+function OwedPopover({ title, children, onClose, onMouseEnter, onMouseLeave }) {
+  const ref = React.useRef(null);
+  React.useEffect(() => {
+    const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) onClose(); };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [onClose]);
+  return (
+    <div ref={ref} className="owed-popover" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+      <div className="owed-popover-title">{title}</div>
+      <div className="owed-popover-body">{children}</div>
+    </div>
+  );
+}
+
 /* ───── Roster (people management) view ───── */
-function RosterView({ people, newName, setNewName, newNameRef, onAdd, onRemove, onRename, onToggleShuttle, onToggleDay }) {
+function RosterView({ people, shuttlecocks, sessions, newName, setNewName, newNameRef, onAdd, onRemove, onRename, onToggleShuttle, onSetAllShuttle, onToggleDay }) {
+  const allPaid = people.length > 0 && people.every(p => p.shuttlePaid);
+  // Derive each person's current shuttle coverage based on today + shuttlecocks.
+  // Used for display only — actual surcharge decisions happen per-session.
+  const todayIso = isoDate(new Date());
+  const coveredById = Object.fromEntries(people.map(p => [p.id, isCoveredOn(p.id, todayIso, shuttlecocks || [])]));
+
+  // Per-person outstanding totals.
+  // Sessions owed: sum of (baseSplit + surcharge) across attended-but-unpaid sessions.
+  // Shuttle owed: sum of per-card split across cards person is on but hasn't paid.
+  // Per-person outstanding totals + per-row breakdowns for the popover.
+  const sessionOwed = Object.fromEntries(people.map(p => [p.id, 0]));
+  const sessionOwedItems = Object.fromEntries(people.map(p => [p.id, []]));
+  const sortedSessionDates = Object.keys(sessions || {}).sort();
+  for (const date of sortedSessionDates) {
+    const sess = sessions[date] || {};
+    const att = sess.attendance || {};
+    const pays = sess.payments || {};
+    const attendedIds = Object.keys(att).filter(pid => att[pid] && people.some(p => p.id === pid));
+    const ct = attendedIds.length;
+    if (ct === 0) continue;
+    const courtHire = Number(sess.courtHire) || 0;
+    const baseSplit = courtHire > 0 ? courtHire / ct : 0;
+    const [Y, M, D] = date.split('-').map(Number);
+    const dow = new Date(Y, M - 1, D).getDay();
+    const dayShort = (DAYS.find(d => d.dow === dow) || {}).short || '';
+    for (const pid of attendedIds) {
+      if (pays[pid]) continue;
+      const sur = isCoveredOn(pid, date, shuttlecocks || []) ? 0 : SHUTTLE_SURCHARGE;
+      const total = baseSplit + sur;
+      if (total > 0) {
+        sessionOwed[pid] = (sessionOwed[pid] || 0) + total;
+        sessionOwedItems[pid].push({ date, dayShort, base: baseSplit, surcharge: sur, total });
+      }
+    }
+  }
+  const shuttleOwed = Object.fromEntries(people.map(p => [p.id, 0]));
+  const shuttleOwedItems = Object.fromEntries(people.map(p => [p.id, []]));
+  for (const s of (shuttlecocks || [])) {
+    const ids = s.personIds || people.map(p => p.id);
+    const cardPeople = ids.filter(pid => people.some(p => p.id === pid));
+    if (cardPeople.length === 0) continue;
+    const cost = Number(s.cost) || 0;
+    const applied = Number(s.appliedSurcharge) || 0;
+    const remaining = Math.max(0, cost - applied);
+    if (remaining === 0) continue;
+    const split = remaining / cardPeople.length;
+    const pays = s.payments || {};
+    for (const pid of cardPeople) {
+      if (pays[pid]) continue;
+      shuttleOwed[pid] = (shuttleOwed[pid] || 0) + split;
+      shuttleOwedItems[pid].push({ name: s.name || 'Shuttlecock', date: s.date || '', share: split });
+    }
+  }
+
+  const [openCell, setOpenCell] = React.useState(null); // {pid, kind:'sessions'|'shuttles'}
+  const hoverTimer = React.useRef(null);
+  const openHover = (pid, kind) => { if (hoverTimer.current) { clearTimeout(hoverTimer.current); hoverTimer.current = null; } setOpenCell({ pid, kind }); };
+  const closeHover = () => { if (hoverTimer.current) clearTimeout(hoverTimer.current); hoverTimer.current = setTimeout(() => setOpenCell(null), 120); };
+  const [focusedId, setFocusedId] = React.useState(null);
+  const focusedPerson = focusedId ? people.find(p => p.id === focusedId) : null;
+  React.useEffect(() => { if (focusedId && !people.some(p => p.id === focusedId)) setFocusedId(null); }, [people, focusedId]);
   return (
     <div className="roster-panel">
       <div className="roster-panel-head">
@@ -1226,7 +1870,19 @@ function RosterView({ people, newName, setNewName, newNameRef, onAdd, onRemove, 
           <h2>People</h2>
           <p>Add or remove players, set their regular days, and track shuttle payments.</p>
         </div>
+        {people.length > 0 && (
+          <span style={{ fontSize: 11.5, color: 'var(--ink-3)', alignSelf: 'flex-start', maxWidth: 260, textAlign: 'right', lineHeight: 1.4 }}>
+            Shuttle coverage is derived from each person’s presence on the most recent shuttlecock card.
+          </span>
+        )}
       </div>
+
+      {focusedPerson && (
+        <div className="focus-banner">
+          <span>Focused on <strong>{focusedPerson.name}</strong></span>
+          <button className="focus-banner-clear" onClick={() => setFocusedId(null)}>× Show all</button>
+        </div>
+      )}
 
       <div className="add-person">
         <input
@@ -1249,14 +1905,26 @@ function RosterView({ people, newName, setNewName, newNameRef, onAdd, onRemove, 
             <tr>
               <th>Name</th>
               <th className="center" style={{ width: 180 }}>Regular days</th>
-              <th className="center" style={{ width: 170 }}>Shuttle paid</th>
+              <th className="center" style={{ width: 170 }}>Shuttle coverage</th>
+              <th className="right" style={{ width: 120 }}>Owes (sessions)</th>
+              <th className="right" style={{ width: 130 }}>Owes (shuttles)</th>
+              <th className="right" style={{ width: 110 }}>Total owed</th>
               <th style={{ width: 60 }}></th>
             </tr>
           </thead>
           <tbody>
-            {people.map(p => (
-              <tr key={p.id}>
+            {people.map(p => {
+              const isFocused = focusedId === p.id;
+              const isDimmed = focusedId && !isFocused;
+              return (
+              <tr key={p.id} className={`${isFocused ? 'row-focused' : ''} ${isDimmed ? 'row-dimmed' : ''}`}>
                 <td className="name-cell">
+                  <button
+                    className={`focus-dot ${isFocused ? 'on' : ''}`}
+                    onClick={() => setFocusedId(isFocused ? null : p.id)}
+                    title={isFocused ? 'Show everyone' : `Isolate ${p.name || 'this player'}`}
+                    aria-pressed={isFocused}
+                  />
                   <input
                     value={p.name}
                     onChange={(e) => onRename(p.id, e.target.value)}
@@ -1278,18 +1946,61 @@ function RosterView({ people, newName, setNewName, newNameRef, onAdd, onRemove, 
                   </div>
                 </td>
                 <td style={{ textAlign: 'center' }}>
-                  <label className={`toggle-shuttle ${p.shuttlePaid ? 'on' : ''}`}>
-                    <span className="toggle-track">
-                      <span className="toggle-thumb" />
-                    </span>
-                    <span className="toggle-label">{p.shuttlePaid ? 'Paid' : 'Unpaid (+$2)'}</span>
-                    <input
-                      type="checkbox"
-                      checked={p.shuttlePaid}
-                      onChange={() => onToggleShuttle(p.id)}
-                      style={{ display: 'none' }}
-                    />
-                  </label>
+                  <span className={`coverage-badge ${coveredById[p.id] ? 'on' : 'off'}`} title={coveredById[p.id] ? 'Currently on the most recent shuttlecock card' : 'Not on the most recent shuttlecock card — +$2 applies to their sessions'}>
+                    {coveredById[p.id] ? 'Covered' : 'Not covered (+$2)'}
+                  </span>
+                </td>
+                <td
+                  className="owed-cell mono"
+                  style={{ textAlign: 'right', position: 'relative' }}
+                  onMouseEnter={() => (sessionOwed[p.id] || 0) > 0 && openHover(p.id, 'sessions')}
+                  onMouseLeave={closeHover}
+                >
+                  {(sessionOwed[p.id] || 0) > 0 ? (
+                    <button className="owed-btn owed-amount" onClick={() => setOpenCell(o => o && o.pid === p.id && o.kind === 'sessions' ? null : { pid: p.id, kind: 'sessions' })}>
+                      {money(sessionOwed[p.id])}
+                    </button>
+                  ) : <span className="owed-zero">{money(0)}</span>}
+                  {openCell && openCell.pid === p.id && openCell.kind === 'sessions' && (
+                    <OwedPopover title={`${p.name} — unpaid sessions`} onClose={() => setOpenCell(null)} onMouseEnter={() => openHover(p.id, 'sessions')} onMouseLeave={closeHover}>
+                      {sessionOwedItems[p.id].map((it, i) => (
+                        <div key={i} className="owed-row">
+                          <span className="owed-row-label">{it.dayShort} · {it.date}</span>
+                          <span className="owed-row-amt mono">
+                            {money(it.total)}
+                            {it.surcharge > 0 && <span className="owed-row-sur"> (incl. +${it.surcharge})</span>}
+                          </span>
+                        </div>
+                      ))}
+                    </OwedPopover>
+                  )}
+                </td>
+                <td
+                  className="owed-cell mono"
+                  style={{ textAlign: 'right', position: 'relative' }}
+                  onMouseEnter={() => (shuttleOwed[p.id] || 0) > 0 && openHover(p.id, 'shuttles')}
+                  onMouseLeave={closeHover}
+                >
+                  {(shuttleOwed[p.id] || 0) > 0 ? (
+                    <button className="owed-btn owed-amount" onClick={() => setOpenCell(o => o && o.pid === p.id && o.kind === 'shuttles' ? null : { pid: p.id, kind: 'shuttles' })}>
+                      {money(shuttleOwed[p.id])}
+                    </button>
+                  ) : <span className="owed-zero">{money(0)}</span>}
+                  {openCell && openCell.pid === p.id && openCell.kind === 'shuttles' && (
+                    <OwedPopover title={`${p.name} — unpaid shuttlecocks`} onClose={() => setOpenCell(null)} onMouseEnter={() => openHover(p.id, 'shuttles')} onMouseLeave={closeHover}>
+                      {shuttleOwedItems[p.id].map((it, i) => (
+                        <div key={i} className="owed-row">
+                          <span className="owed-row-label">{it.name}{it.date ? ` · ${it.date}` : ''}</span>
+                          <span className="owed-row-amt mono">{money(it.share)}</span>
+                        </div>
+                      ))}
+                    </OwedPopover>
+                  )}
+                </td>
+                <td className="owed-cell mono" style={{ textAlign: 'right' }}>
+                  <span className={((sessionOwed[p.id] || 0) + (shuttleOwed[p.id] || 0)) > 0 ? 'owed-total' : 'owed-zero'}>
+                    {money((sessionOwed[p.id] || 0) + (shuttleOwed[p.id] || 0))}
+                  </span>
                 </td>
                 <td className="row-actions">
                   <button
@@ -1309,11 +2020,315 @@ function RosterView({ people, newName, setNewName, newNameRef, onAdd, onRemove, 
                   </button>
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       )}
     </div>
+  );
+}
+
+/* ───── Shuttlecocks view ───── */
+function ShuttlecocksView({ shuttlecocks, people, sessions, onAdd, onRemove, onUpdate, onTogglePayment, onAddPerson, onRemovePerson }) {
+  const [statusFilter, setStatusFilter] = React.useState('all');
+  // Budget = total $2 surcharges accrued across all sessions where an attended
+  // person was not shuttle-covered on that session date.
+  let accrued = 0;
+  for (const date of Object.keys(sessions || {})) {
+    const att = sessions[date].attendance || {};
+    for (const pid of Object.keys(att)) {
+      if (!att[pid]) continue;
+      if (!isCoveredOn(pid, date, shuttlecocks)) accrued += SHUTTLE_SURCHARGE;
+    }
+  }
+  const totalApplied = shuttlecocks.reduce((sum, s) => sum + (Number(s.appliedSurcharge) || 0), 0);
+  const budget = Math.max(0, accrued - totalApplied);
+
+  const isShuttleFullyPaid = (s) => {
+    const ids = s.personIds || people.map(p => p.id);
+    const cardPeople = ids.map(pid => people.find(p => p.id === pid)).filter(Boolean);
+    if (cardPeople.length === 0) return false;
+    const pays = s.payments || {};
+    return cardPeople.every(p => pays[p.id]);
+  };
+  const filteredShuttlecocks = shuttlecocks.filter(s => {
+    if (statusFilter === 'all') return true;
+    const paid = isShuttleFullyPaid(s);
+    return statusFilter === 'paid' ? paid : !paid;
+  });
+  return (
+    <div>
+      <div className="budget-card">
+        <div className="budget-label">
+          <div className="budget-title">Budget</div>
+          <div className="budget-sub">Accrued from +${SHUTTLE_SURCHARGE} surcharges in Sessions</div>
+        </div>
+        <div className="budget-amount mono">{money(budget)}</div>
+      </div>
+
+      <div className="shuttles-header">
+        <div>
+          <h2 style={{ margin: 0, fontSize: 17, fontWeight: 800, letterSpacing: '-0.015em' }}>Shuttlecocks</h2>
+          <p style={{ margin: '2px 0 0', fontSize: 12.5, color: 'var(--ink-3)' }}>
+            Track each shuttlecock purchase and who's paid their share.
+          </p>
+        </div>
+        <div className="shuttles-header-actions">
+          <StatusFilter value={statusFilter} onChange={setStatusFilter} />
+          <button className="add-shuttle-btn" onClick={onAdd}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Add shuttlecock
+          </button>
+        </div>
+      </div>
+
+      {shuttlecocks.length === 0 ? (
+        <div className="shuttles-empty">
+          <div className="shuttles-empty-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2l3 8h-6l3-8z"/><circle cx="12" cy="14" r="5"/><path d="M9 19l-2 3M15 19l2 3M12 19v3"/>
+            </svg>
+          </div>
+          <div style={{ fontWeight: 600, marginBottom: 4 }}>No shuttlecocks logged yet</div>
+          <div style={{ fontSize: 12.5, color: 'var(--ink-3)', marginBottom: 14 }}>
+            Add a card for each tube or batch you buy.
+          </div>
+          <button className="add-shuttle-btn" onClick={onAdd}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Add shuttlecock
+          </button>
+        </div>
+      ) : (
+        <div className="shuttles-grid">
+          {filteredShuttlecocks.length === 0 ? (
+            <div className="filter-empty">
+              {statusFilter === 'paid' ? 'No fully-paid shuttlecocks yet.' : 'No outstanding shuttlecocks.'}
+            </div>
+          ) : filteredShuttlecocks.map(s => (
+            <ShuttlecockCard
+              key={s.id}
+              shuttle={s}
+              people={people}
+              sessions={sessions}
+              allShuttlecocks={shuttlecocks}
+              onRemove={() => onRemove(s.id)}
+              onUpdate={(field, value) => onUpdate(s.id, field, value)}
+              onTogglePayment={(pid) => onTogglePayment(s.id, pid)}
+              onAddPerson={(pid) => onAddPerson(s.id, pid)}
+              onRemovePerson={(pid) => onRemovePerson(s.id, pid)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ShuttlecockCard({ shuttle, people, sessions, allShuttlecocks, onRemove, onUpdate, onTogglePayment, onAddPerson, onRemovePerson }) {
+  const payments = shuttle.payments || {};
+  const cost = Number(shuttle.cost) || 0;
+  const applied = Number(shuttle.appliedSurcharge) || 0;
+  // Back-compat: if personIds missing, include all current people
+  const personIds = shuttle.personIds || people.map(p => p.id);
+  const cardPeople = personIds.map(pid => people.find(p => p.id === pid)).filter(Boolean);
+  const remaining = Math.max(0, cost - applied);
+  const split = cardPeople.length > 0 ? remaining / cardPeople.length : 0;
+  const paidPeople = cardPeople.filter(p => payments[p.id]);
+  const paidCount = paidPeople.length;
+  const paidAmount = paidPeople.length * split;
+  const fullyPaid = cardPeople.length > 0 && paidCount === cardPeople.length;
+  const eligibleToAdd = people.filter(p => !personIds.includes(p.id));
+  const [showAdd, setShowAdd] = React.useState(false);
+
+  // Available surcharge pool: sum of +$2 across attended sessions on or before this
+  // card's date where the attendee was not shuttle-covered on that session,
+  // minus what's already been applied by OTHER shuttlecock cards.
+  const cutoff = shuttle.date || isoDate(new Date());
+  let accruedHere = 0;
+  for (const d of Object.keys(sessions || {})) {
+    if (d > cutoff) continue;
+    const att = sessions[d].attendance || {};
+    for (const pid of Object.keys(att)) {
+      if (!att[pid]) continue;
+      if (!isCoveredOn(pid, d, allShuttlecocks)) accruedHere += SHUTTLE_SURCHARGE;
+    }
+  }
+  const appliedElsewhere = (allShuttlecocks || []).reduce((sum, s) => s.id === shuttle.id ? sum : sum + (Number(s.appliedSurcharge) || 0), 0);
+  const pool = Math.max(0, accruedHere - appliedElsewhere);
+  const canApply = pool > 0 && applied < pool;
+  const applySurcharge = () => onUpdate('appliedSurcharge', applied + pool);
+  const clearSurcharge = () => onUpdate('appliedSurcharge', 0);
+  const [costStr, setCostStr] = React.useState(shuttle.cost ? String(shuttle.cost) : '');
+  React.useEffect(() => { setCostStr(shuttle.cost ? String(shuttle.cost) : ''); }, [shuttle.id, shuttle.cost]);
+  const onCostChange = (e) => {
+    const v = e.target.value.replace(/[^\d.]/g, '');
+    setCostStr(v);
+    onUpdate('cost', parseFloat(v) || 0);
+  };
+
+  return (
+    <section className={`shuttle-card ${fullyPaid ? 'is-fully-paid' : ''}`}>
+      {fullyPaid && <div className="fully-paid-banner">FULLY PAID</div>}
+      <div className="shuttle-head">
+        <div className="shuttle-fields">
+          <textarea
+            className="shuttle-name"
+            value={shuttle.name}
+            onChange={(e) => onUpdate('name', e.target.value)}
+            placeholder="Shuttlecock name…"
+            rows={1}
+          />
+          <input
+            className="shuttle-date mono"
+            type="date"
+            value={shuttle.date || ''}
+            onChange={(e) => onUpdate('date', e.target.value)}
+          />
+        </div>
+        <button
+          className="icon-btn shuttle-remove"
+          onClick={() => { if (window.confirm('Remove this shuttlecock?')) onRemove(); }}
+          data-tip="Remove shuttlecock"
+          aria-label="Remove shuttlecock"
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+            <path d="M10 11v6M14 11v6"/>
+            <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/>
+          </svg>
+        </button>
+      </div>
+
+      <div className="court-row">
+        <label htmlFor={`cost-${shuttle.id}`}>Total cost</label>
+        <div className="court-input-wrap">
+          <span className="prefix">$</span>
+          <input
+            id={`cost-${shuttle.id}`}
+            className="court-input"
+            type="text"
+            inputMode="decimal"
+            value={costStr}
+            onChange={onCostChange}
+            placeholder="0.00"
+          />
+        </div>
+      </div>
+
+      <div className="surcharge-row">
+        {applied > 0 ? (
+          <>
+            <div className="surcharge-info">
+              <div className="surcharge-info-label">Applied from surcharge pool</div>
+              <div className="surcharge-info-amount mono">−{money(applied)}</div>
+            </div>
+            <button className="surcharge-btn clear" onClick={clearSurcharge}>Undo</button>
+          </>
+        ) : (
+          <>
+            <div className="surcharge-info">
+              <div className="surcharge-info-label">Surcharge pool available</div>
+              <div className="surcharge-info-amount mono">{money(pool)}</div>
+            </div>
+            <button className="surcharge-btn" onClick={applySurcharge} disabled={!canApply}>Apply to cost</button>
+          </>
+        )}
+      </div>
+
+      <ul className="roster-list">
+        {cardPeople.length === 0 && (
+          <li className="roster-empty" style={{ padding: '18px' }}>
+            No one on this card yet.<br/>
+            {eligibleToAdd.length > 0 && (
+              <button onClick={() => setShowAdd(true)} style={{ marginTop: 8 }}>+ Add a player</button>
+            )}
+          </li>
+        )}
+        {cardPeople.map(p => {
+          const paid = !!payments[p.id];
+          return (
+            <li key={p.id} className={`roster-item ${paid ? 'is-paid attended' : ''}`}>
+              <div className="person-name" style={{ gridColumn: '1 / span 2' }}>{p.name}</div>
+              <div className={`person-cost ${cost > 0 ? '' : 'dim'}`}>
+                {cost > 0 ? money(split) : '—'}
+              </div>
+              <button
+                className={`pay-check ${paid ? 'on' : ''}`}
+                onClick={() => onTogglePayment(p.id)}
+                aria-pressed={paid}
+                data-tip={paid ? 'Paid · click to unmark' : 'Mark as paid'}
+                aria-label={`Toggle paid for ${p.name}`}
+              >
+                {paid ? (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                ) : (
+                  <span className="pay-dash">$</span>
+                )}
+              </button>
+              <button
+                className="drop-btn"
+                onClick={() => { if (window.confirm(`Remove ${p.name || 'this player'} from this shuttlecock?`)) onRemovePerson(p.id); }}
+                data-tip="Remove from this card"
+                aria-label={`Remove ${p.name} from this card`}
+                style={{ gridColumn: '5', marginLeft: 0 }}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+
+      <div className="day-actions shuttle-roster-actions" style={{ borderTop: '1px solid var(--line)', borderBottom: 0 }}>
+        {eligibleToAdd.length > 0 ? (
+          <div style={{ position: 'relative' }}>
+            <button className="day-action" onClick={() => setShowAdd(v => !v)}>+ Add player</button>
+            {showAdd && (
+              <QuickAddDropdown
+                people={eligibleToAdd}
+                onPick={(pid) => { onAddPerson(pid); setShowAdd(false); }}
+                onClose={() => setShowAdd(false)}
+              />
+            )}
+          </div>
+        ) : (
+          <span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>All players added</span>
+        )}
+        {cardPeople.length > 0 && (
+          <button
+            className="day-action danger"
+            onClick={() => {
+              if (window.confirm(`Remove all ${cardPeople.length} ${cardPeople.length === 1 ? 'player' : 'players'} from this card?`)) {
+                onUpdate('personIds', []);
+              }
+            }}
+          >
+            Remove all
+          </button>
+        )}
+      </div>
+
+      <div className="day-foot">
+        <span className="label">Base split</span>
+        <span className="value mono">{remaining > 0 && cardPeople.length > 0 ? money(split) : '—'}</span>
+        {applied > 0 && (
+          <>
+            <span className="label" style={{ color: 'var(--warn)' }}>Less surcharge</span>
+            <span className="value mono" style={{ color: 'var(--warn)' }}>−{money(applied)}</span>
+          </>
+        )}
+        <span className="label">Collected</span>
+        <span className="value mono">{paidCount} / {cardPeople.length} · {money(paidAmount)}</span>
+        <span className="label">Total</span>
+        <span className="value big mono">{money(remaining)}</span>
+      </div>
+    </section>
   );
 }
 
