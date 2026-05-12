@@ -1208,7 +1208,7 @@ function App() {
   }, []);
 
   /* derived */
-  const peopleById = useMemo(() => Object.fromEntries(state.people.map(p => [p.id, p])), [state.people]);
+  const peopleById = useMemo(() => state ? Object.fromEntries(state.people.map(p => [p.id, p])) : {}, [state]);
   const todayIso = todayISO();
 
   /* mutators */
