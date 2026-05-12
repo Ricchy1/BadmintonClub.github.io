@@ -1964,8 +1964,8 @@ function RosterView({ people, shuttlecocks, sessions, newName, setNewName, newNa
                   </button>
                 </td>
                 <td style={{ textAlign: 'center' }}>
-                  <span className={`coverage-badge ${coveredById[p.id] ? 'on' : 'off'}`} title={coveredById[p.id] ? 'Currently on the most recent shuttlecock card' : 'Not on the most recent shuttlecock card — +$2 applies to their sessions'}>
-                    {coveredById[p.id] ? 'Covered' : 'Not covered (+$2)'}
+                  <span className={`coverage-badge ${(p.langdon || coveredById[p.id]) ? 'on' : 'off'}`} title={p.langdon ? 'Langdon — exempt from +$2' : (coveredById[p.id] ? 'Currently on the most recent shuttlecock card' : 'Not on the most recent shuttlecock card — +$2 applies to their sessions')}>
+                    {p.langdon ? 'Exempt (Langdon)' : (coveredById[p.id] ? 'Covered' : 'Not covered (+$2)')}
                   </span>
                 </td>
                 <td
