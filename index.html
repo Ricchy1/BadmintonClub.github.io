@@ -728,8 +728,14 @@ async function loadStateFromDB() {
       .select('data')
       .eq('id', DB_ROW_ID)
       .single();
-    if (error || !data) return null;
-    return data.data;
+    console.log('Supabase load result:', { data, error });
+    if (error) {
+      // PGRST116 = row not found, that's fine (first load)
+      if (error.code === 'PGRST116') return null;
+      console.error('Supabase load error:', error);
+      return null;
+    }
+    return data ? data.data : null;
   } catch (e) {
     console.error('Failed to load from Supabase:', e);
     return null;
@@ -742,9 +748,11 @@ function saveStateToDB(s) {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
     try {
-      await supabase
+      const { error } = await supabase
         .from('app_state')
         .upsert({ id: DB_ROW_ID, data: s, updated_at: new Date().toISOString() });
+      if (error) console.error('Supabase save error:', error);
+      else console.log('Saved to Supabase OK');
     } catch (e) {
       console.error('Failed to save to Supabase:', e);
     }
@@ -776,6 +784,7 @@ function App() {
   const [newName, setNewName] = useState('');
   const newNameRef = useRef(null);
   const skipNextRealtime = useRef(false); // avoid echo from our own saves
+  const loaded = useRef(false); // track whether initial load is done
 
   // Load initial data from Supabase
   useEffect(() => {
@@ -789,12 +798,13 @@ function App() {
         setState(initial);
         saveStateToDB(initial);
       }
+      loaded.current = true;
     });
   }, []);
 
-  // Save to Supabase whenever state changes
+  // Save to Supabase whenever state changes (but not before initial load)
   useEffect(() => {
-    if (!state) return;
+    if (!state || !loaded.current) return;
     skipNextRealtime.current = true;
     saveStateToDB({ ...state, activeTab: tab });
   }, [state, tab]);
