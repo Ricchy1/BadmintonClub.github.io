@@ -1322,6 +1322,9 @@ function App() {
   function toggleShuttle(id) {
     updatePeople(ps => ps.map(p => p.id === id ? { ...p, shuttlePaid: !p.shuttlePaid } : p));
   }
+  function toggleLangdon(id) {
+    updatePeople(ps => ps.map(p => p.id === id ? { ...p, langdon: !p.langdon } : p));
+  }
   function setAllShuttle(paid) {
     updatePeople(ps => ps.map(p => ({ ...p, shuttlePaid: paid })));
   }
@@ -1431,6 +1434,7 @@ function App() {
           onRemove={removePerson}
           onRename={renamePerson}
           onToggleShuttle={toggleShuttle}
+          onToggleLangdon={toggleLangdon}
           onSetAllShuttle={setAllShuttle}
           onToggleDay={togglePersonDay}
         />
@@ -1490,7 +1494,7 @@ function SessionsView({ weekStart, state, peopleById, shuttlecocks, todayIso, on
     const baseSplit = attendees.length > 0 && session.courtHire > 0
       ? session.courtHire / attendees.length : 0;
     const total = attendees.length > 0 ? (Number(session.courtHire) || 0) : 0;
-    const surchargeCount = attendees.filter(p => !isCoveredOn(p.id, iso, shuttlecocks)).length;
+    const surchargeCount = attendees.filter(p => !p.langdon && !isCoveredOn(p.id, iso, shuttlecocks)).length;
     const surchargeTotal = surchargeCount * SHUTTLE_SURCHARGE;
     const payments = session.payments || {};
     const paidAttendees = attendees.filter(p => payments[p.id]);
@@ -1655,7 +1659,8 @@ function DayCard({ di, allPeople, peopleById, shuttlecocks, isToday, isPast, onS
           const attended = !!di.session.attendance[p.id];
           const paid = !!(di.session.payments && di.session.payments[p.id]);
           const covered = isCoveredOn(p.id, di.iso, shuttlecocks);
-          const personCost = attended ? di.baseSplit + (covered ? 0 : SHUTTLE_SURCHARGE) : 0;
+          const exempt = p.langdon || covered;
+          const personCost = attended ? di.baseSplit + (exempt ? 0 : SHUTTLE_SURCHARGE) : 0;
           return (
             <li key={p.id} className={`roster-item ${attended ? 'attended' : ''} ${paid ? 'is-paid' : ''}`}>
               <button
@@ -1670,15 +1675,16 @@ function DayCard({ di, allPeople, peopleById, shuttlecocks, isToday, isPast, onS
               </button>
               <div className={`person-name ${attended ? '' : 'dim'}`}>
                 {p.name}
-                {!covered && (
+                {!exempt && (
                   <span className="shuttle-flag" data-tip="No active shuttlecock coverage · +$2 surcharge">
                     +$2
                   </span>
                 )}
+                {p.langdon && <span className="shuttle-flag" style={{ background: '#e8f0fe', color: '#1a56db' }}>Langdon</span>}
               </div>
               <div className={`person-cost ${attended ? '' : 'dim'}`}>
                 {attended ? money(personCost) : '—'}
-                {attended && !covered && <span className="surcharge">incl. +${SHUTTLE_SURCHARGE}</span>}
+                {attended && !exempt && <span className="surcharge">incl. +${SHUTTLE_SURCHARGE}</span>}
               </div>
               <button
                 className={`pay-check ${paid ? 'on' : ''} ${attended ? '' : 'muted'}`}
@@ -1801,7 +1807,7 @@ function OwedPopover({ title, children, onClose, onMouseEnter, onMouseLeave }) {
 }
 
 /* ───── Roster (people management) view ───── */
-function RosterView({ people, shuttlecocks, sessions, newName, setNewName, newNameRef, onAdd, onRemove, onRename, onToggleShuttle, onSetAllShuttle, onToggleDay }) {
+function RosterView({ people, shuttlecocks, sessions, newName, setNewName, newNameRef, onAdd, onRemove, onRename, onToggleShuttle, onToggleLangdon, onSetAllShuttle, onToggleDay }) {
   const allPaid = people.length > 0 && people.every(p => p.shuttlePaid);
   // Derive each person's current shuttle coverage based on today + shuttlecocks.
   // Used for display only — actual surcharge decisions happen per-session.
@@ -1829,7 +1835,8 @@ function RosterView({ people, shuttlecocks, sessions, newName, setNewName, newNa
     const dayShort = (DAYS.find(d => d.dow === dow) || {}).short || '';
     for (const pid of attendedIds) {
       if (pays[pid]) continue;
-      const sur = isCoveredOn(pid, date, shuttlecocks || []) ? 0 : SHUTTLE_SURCHARGE;
+      const person = people.find(p => p.id === pid);
+      const sur = (person && person.langdon) ? 0 : (isCoveredOn(pid, date, shuttlecocks || []) ? 0 : SHUTTLE_SURCHARGE);
       const total = baseSplit + sur;
       if (total > 0) {
         sessionOwed[pid] = (sessionOwed[pid] || 0) + total;
@@ -1905,6 +1912,7 @@ function RosterView({ people, shuttlecocks, sessions, newName, setNewName, newNa
             <tr>
               <th>Name</th>
               <th className="center" style={{ width: 180 }}>Regular days</th>
+              <th className="center" style={{ width: 100 }}>Langdon</th>
               <th className="center" style={{ width: 170 }}>Shuttle coverage</th>
               <th className="right" style={{ width: 120 }}>Owes (sessions)</th>
               <th className="right" style={{ width: 130 }}>Owes (shuttles)</th>
@@ -1944,6 +1952,16 @@ function RosterView({ people, shuttlecocks, sessions, newName, setNewName, newNa
                       </button>
                     ))}
                   </div>
+                </td>
+                <td style={{ textAlign: 'center' }}>
+                  <button
+                    className={`day-chip ${p.langdon ? 'on' : ''}`}
+                    onClick={() => onToggleLangdon(p.id)}
+                    style={{ width: 'auto', padding: '4px 10px', fontSize: 11 }}
+                    data-tip={p.langdon ? 'Langdon — exempt from +$2' : 'Click to mark as Langdon (no +$2)'}
+                  >
+                    {p.langdon ? '✓ Langdon' : 'Langdon'}
+                  </button>
                 </td>
                 <td style={{ textAlign: 'center' }}>
                   <span className={`coverage-badge ${coveredById[p.id] ? 'on' : 'off'}`} title={coveredById[p.id] ? 'Currently on the most recent shuttlecock card' : 'Not on the most recent shuttlecock card — +$2 applies to their sessions'}>
@@ -2039,6 +2057,8 @@ function ShuttlecocksView({ shuttlecocks, people, sessions, onAdd, onRemove, onU
     const att = sessions[date].attendance || {};
     for (const pid of Object.keys(att)) {
       if (!att[pid]) continue;
+      const person = people.find(p => p.id === pid);
+      if (person && person.langdon) continue;
       if (!isCoveredOn(pid, date, shuttlecocks)) accrued += SHUTTLE_SURCHARGE;
     }
   }
@@ -2155,6 +2175,8 @@ function ShuttlecockCard({ shuttle, people, sessions, allShuttlecocks, onRemove,
     const att = sessions[d].attendance || {};
     for (const pid of Object.keys(att)) {
       if (!att[pid]) continue;
+      const person = people.find(p => p.id === pid);
+      if (person && person.langdon) continue;
       if (!isCoveredOn(pid, d, allShuttlecocks)) accruedHere += SHUTTLE_SURCHARGE;
     }
   }
