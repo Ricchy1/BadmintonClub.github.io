@@ -2641,7 +2641,7 @@ function HistoryView({ sessions, people, shuttlecocks }) {
                 <th style={{ width: '10%' }}>Day</th>
                 <th>Date</th>
                 <th className="right">Court</th>
-                <th className="right">Attended</th>
+                <th style={{ textAlign: 'center' }}>Attended</th>
                 <th className="right">Split</th>
                 <th style={{ textAlign: 'center' }}>Paid</th>
                 <th className="right">Total</th>
@@ -2655,7 +2655,7 @@ function HistoryView({ sessions, people, shuttlecocks }) {
                     <td className="history-day-label">{r.dayLabel}</td>
                     <td className="history-date">{r.dateStr}</td>
                     <td className="right mono">{money(r.courtHire)}</td>
-                    <td className="right mono">{r.attendeeCount}</td>
+                    <td className="mono" style={{ textAlign: 'center' }}>{r.attendeeCount}</td>
                     <td className="right mono">{r.baseSplit > 0 ? money(r.baseSplit) : '—'}</td>
                     <td style={{ textAlign: 'center' }}>
                       <span className={`paid-ratio ${allPaid ? 'all-paid' : ''}`}>
