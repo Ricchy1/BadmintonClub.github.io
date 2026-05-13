@@ -1030,6 +1030,66 @@
     }
     .pay-pill.zero { background: var(--bg-2); color: var(--ink-3); }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ───── History table ───── */
+    .history-panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: visible;
+    }
+    .history-panel-head {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+    .history-panel-head h2 { margin: 0; font-size: 17px; font-weight: 800; letter-spacing: -0.015em; }
+    .history-panel-head p { margin: 2px 0 0; font-size: 12.5px; color: var(--ink-3); }
+    .history-table { width: 100%; border-collapse: collapse; }
+    .history-table thead th {
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    .history-table thead th.right { text-align: right; }
+    .history-table tbody td {
+      padding: 11px 16px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: middle;
+      font-size: 14px;
+    }
+    .history-table tbody tr:last-child td { border-bottom: 0; }
+    .history-table tbody tr:hover { background: var(--bg); }
+    .history-table .right { text-align: right; }
+    .history-table .mono { font-family: 'JetBrains Mono', monospace; }
+    .history-day-label { font-weight: 700; }
+    .history-date { color: var(--ink-2); }
+    .paid-ratio { display: inline-flex; align-items: center; gap: 6px; }
+    .paid-ratio .bar { height: 6px; border-radius: 3px; background: var(--line); min-width: 40px; overflow: hidden; display: inline-block; }
+    .paid-ratio .bar-fill { height: 100%; border-radius: 3px; background: var(--accent); display: block; }
+    .paid-ratio.all-paid .bar-fill { background: var(--paid); }
+    .history-empty { padding: 60px 20px; text-align: center; color: var(--ink-3); font-size: 14px; }
+    .history-summary {
+      padding: 14px 16px;
+      border-top: 2px solid var(--line);
+      background: var(--bg);
+      display: flex;
+      gap: 28px;
+      flex-wrap: wrap;
+    }
+    .history-summary .hs-item { display: flex; flex-direction: column; gap: 1px; }
+    .history-summary .hs-label { font-size: 10.5px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; }
+    .history-summary .hs-value { font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 700; }
+
     /* ───── Mobile: bigger fonts ───── */
     @media (max-width: 768px) {
       body { font-size: 17px; }
@@ -1100,6 +1160,16 @@
       .coverage-badge { font-size: 12px; padding: 5px 10px; }
       .owed-cell { font-size: 17px; }
       .payment-badge { font-size: 13px; }
+
+      /* History mobile */
+      .history-panel-head { padding: 14px 14px; }
+      .history-panel-head h2 { font-size: 20px; }
+      .history-panel-head p { font-size: 14px; }
+      .history-table thead th { font-size: 12px; padding: 10px 10px; }
+      .history-table tbody td { padding: 10px 10px; font-size: 16px; }
+      .history-summary { padding: 14px; gap: 20px; }
+      .history-summary .hs-value { font-size: 18px; }
+      .history-summary .hs-label { font-size: 12px; }
     }
   </style>
 </head>
@@ -1473,6 +1543,9 @@ function App() {
         <button className={`tab ${tab === 'shuttles' ? 'active' : ''}`} onClick={() => setTab('shuttles')} role="tab">
           Shuttlecocks <span className="count mono">{(state.shuttlecocks || []).length}</span>
         </button>
+        <button className={`tab ${tab === 'history' ? 'active' : ''}`} onClick={() => setTab('history')} role="tab">
+          History
+        </button>
       </div>
 
       {tab === 'sessions' && (
@@ -1522,6 +1595,14 @@ function App() {
           onTogglePayment={toggleShuttlecockPayment}
           onAddPerson={addPersonToShuttlecock}
           onRemovePerson={removePersonFromShuttlecock}
+        />
+      )}
+
+      {tab === 'history' && (
+        <HistoryView
+          sessions={state.sessions || {}}
+          people={state.people}
+          shuttlecocks={state.shuttlecocks || []}
         />
       )}
     </div>
@@ -2426,6 +2507,107 @@ function ShuttlecockCard({ shuttle, people, sessions, allShuttlecocks, onRemove,
 }
 
 /* ───── Mount ───── */
+/* ───── History view ───── */
+function HistoryView({ sessions, people, shuttlecocks }) {
+  const sortedDates = Object.keys(sessions).sort().reverse();
+  // Filter to only dates that have at least one attendee
+  const activeDates = sortedDates.filter(date => {
+    const att = sessions[date].attendance || {};
+    return Object.values(att).some(Boolean);
+  });
+
+  // Totals
+  let totalCourt = 0, totalSessions = 0, totalPlayerSessions = 0, totalPaid = 0, totalAttendees = 0;
+
+  const rows = activeDates.map(date => {
+    const sess = sessions[date];
+    const att = sess.attendance || {};
+    const pays = sess.payments || {};
+    const courtHire = Number(sess.courtHire) || 0;
+    const attendeeIds = Object.keys(att).filter(pid => att[pid]);
+    const attendeeCount = attendeeIds.length;
+    const paidCount = attendeeIds.filter(pid => pays[pid]).length;
+    const baseSplit = attendeeCount > 0 && courtHire > 0 ? courtHire / attendeeCount : 0;
+
+    // Surcharges
+    let surchargeTotal = 0;
+    attendeeIds.forEach(pid => {
+      const person = people.find(p => p.id === pid);
+      if (person && person.langdon) return;
+      if (!isCoveredOn(pid, date, shuttlecocks)) surchargeTotal += SHUTTLE_SURCHARGE;
+    });
+
+    const dayTotal = courtHire + surchargeTotal;
+
+    const [Y, M, D] = date.split('-').map(Number);
+    const d = new Date(Y, M - 1, D);
+    const dow = d.getDay();
+    const dayInfo = DAYS.find(dd => dd.dow === dow);
+    const dayLabel = dayInfo ? dayInfo.label : d.toLocaleDateString(undefined, { weekday: 'long' });
+    const dateStr = d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+
+    totalCourt += courtHire;
+    totalSessions++;
+    totalPlayerSessions += attendeeCount;
+    totalPaid += paidCount;
+    totalAttendees += attendeeCount;
+
+    return { date, dayLabel, dateStr, courtHire, attendeeCount, paidCount, baseSplit, surchargeTotal, dayTotal };
+  });
+
+  return (
+    <div className="history-panel">
+      <div className="history-panel-head">
+        <h2>Session History</h2>
+        <p>All recorded sessions, most recent first.</p>
+      </div>
+      {rows.length === 0 ? (
+        <div className="history-empty">No sessions recorded yet.</div>
+      ) : (
+        <>
+          <table className="history-table">
+            <thead>
+              <tr>
+                <th>Day</th>
+                <th>Date</th>
+                <th className="right">Court Cost</th>
+                <th className="right">Attended</th>
+                <th className="right">Base Split</th>
+                <th className="right">Paid</th>
+                <th className="right">Day Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(r => (
+                <tr key={r.date}>
+                  <td className="history-day-label">{r.dayLabel}</td>
+                  <td className="history-date">{r.dateStr}</td>
+                  <td className="right mono">${money(r.courtHire)}</td>
+                  <td className="right mono">{r.attendeeCount}</td>
+                  <td className="right mono">${r.baseSplit > 0 ? money(r.baseSplit) : '—'}</td>
+                  <td className="right">
+                    <span className={`paid-ratio ${r.paidCount === r.attendeeCount ? 'all-paid' : ''}`}>
+                      <span className="mono">{r.paidCount}/{r.attendeeCount}</span>
+                      <span className="bar"><span className="bar-fill" style={{ width: `${r.attendeeCount > 0 ? (r.paidCount / r.attendeeCount) * 100 : 0}%` }} /></span>
+                    </span>
+                  </td>
+                  <td className="right mono" style={{ fontWeight: 700 }}>${money(r.dayTotal)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="history-summary">
+            <div className="hs-item"><span className="hs-label">Total Sessions</span><span className="hs-value">{totalSessions}</span></div>
+            <div className="hs-item"><span className="hs-label">Total Court Hire</span><span className="hs-value">${money(totalCourt)}</span></div>
+            <div className="hs-item"><span className="hs-label">Player-Sessions</span><span className="hs-value">{totalPlayerSessions}</span></div>
+            <div className="hs-item"><span className="hs-label">Paid</span><span className="hs-value" style={{ color: totalPaid === totalAttendees ? 'var(--paid)' : 'var(--danger)' }}>{totalPaid}/{totalAttendees}</span></div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
 
 </script>
