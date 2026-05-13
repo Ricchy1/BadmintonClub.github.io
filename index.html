@@ -1033,50 +1033,72 @@
     /* ───── Mobile: bigger fonts ───── */
     @media (max-width: 768px) {
       body { font-size: 17px; }
-      .brand-title { font-size: 22px; }
-      .brand-sub { font-size: 14px; }
-      .week-label { font-size: 15px; min-width: 0; }
-      .today-pill { font-size: 14px; padding: 8px 14px; }
-      .tab { font-size: 15px; padding: 10px 18px; }
+      .app { padding: 16px 12px 80px; }
+      .brand-title { font-size: 20px; }
+      .brand-sub { font-size: 13px; }
+      .topbar { gap: 12px; }
+      .week-label { font-size: 14px; min-width: 0; padding: 0 8px; }
+      .week-nav { padding: 3px; }
+      .week-nav button { width: 34px; height: 34px; }
+      .today-pill { font-size: 13px; padding: 7px 12px; }
+      .tab { font-size: 15px; padding: 10px 16px; }
       .tab .count { font-size: 13px; }
       .day-name { font-size: 22px; }
       .day-date { font-size: 15px; }
       .day-tag { font-size: 12px; padding: 4px 10px; }
-      .court-row label { font-size: 15px; }
-      .court-input { font-size: 18px; width: 130px; padding: 10px 12px 10px 26px; }
-      .court-input-wrap .prefix { font-size: 17px; }
-      .person-name { font-size: 17px; }
-      .person-cost { font-size: 18px; font-weight: 700; min-width: 80px; }
-      .person-cost.dim { font-size: 18px; }
-      .person-cost .surcharge { font-size: 13px; }
-      .shuttle-flag { font-size: 12px; padding: 3px 7px; }
-      .day-foot .label { font-size: 14px; }
-      .day-foot .value { font-size: 17px; }
-      .day-foot .value.big { font-size: 22px; }
-      .day-action { font-size: 14px; padding: 8px 12px; }
+      .court-row { padding: 12px 14px; }
+      .court-row label { font-size: 16px; }
+      .court-input { font-size: 20px; width: 110px; padding: 8px 10px 8px 24px; }
+      .court-input-wrap .prefix { font-size: 18px; }
+
+      /* Roster items — tighter grid, bigger text */
+      .roster-item {
+        grid-template-columns: 30px 1fr auto 30px;
+        gap: 8px;
+        padding: 12px 14px;
+      }
       .check, .check-paid { width: 30px; height: 30px; border-radius: 9px; }
       .check svg, .check-paid svg { width: 18px; height: 18px; }
-      .roster-item { gap: 10px; padding: 12px 16px; }
+      .person-name { font-size: 18px; }
+      .person-cost { font-size: 20px; font-weight: 700; min-width: auto; }
+      .person-cost.dim { font-size: 20px; }
+      .person-cost .surcharge { font-size: 13px; }
+      .shuttle-flag { font-size: 11px; padding: 2px 6px; }
+
+      /* Day footer */
+      .day-foot { padding: 12px 14px 14px; }
+      .day-foot .label { font-size: 14px; }
+      .day-foot .value { font-size: 18px; }
+      .day-foot .value.big { font-size: 24px; }
+      .day-action { font-size: 14px; padding: 8px 12px; }
+      .day-actions { padding: 8px 14px 12px; }
+      .day-head { padding: 14px 14px 12px; }
+
       .roster-empty { font-size: 15px; }
+
+      /* Week summary */
       .ws-item .label { font-size: 13px; }
       .ws-item .value { font-size: 22px; }
-      .ws-note { font-size: 13px; }
+      .ws-note { font-size: 12px; }
+      .week-summary { padding: 14px; gap: 20px; }
+
+      /* Day filters */
       .day-filter-btn, .day-filter-chip { font-size: 14px; padding: 8px 14px; }
       .day-filters-label { font-size: 13px; }
+
+      /* People tab */
+      .roster-panel-head { padding: 14px 14px; }
       .roster-panel-head h2 { font-size: 20px; }
       .roster-panel-head p { font-size: 14px; }
+      .add-person { padding: 12px 14px; }
       .add-person input { font-size: 16px; padding: 10px 14px; }
       .add-person button { font-size: 15px; padding: 10px 18px; }
-      .people-table thead th { font-size: 12px; padding: 14px 12px; }
-      .people-table tbody td { padding: 14px 12px; }
+      .people-table thead th { font-size: 12px; padding: 12px 10px; }
+      .people-table tbody td { padding: 12px 10px; }
       .name-cell, .name-cell input { font-size: 16px; }
       .day-chip { font-size: 13px; width: 42px; height: 32px; }
       .coverage-badge { font-size: 12px; padding: 5px 10px; }
       .owed-cell { font-size: 17px; }
-      .app { padding: 20px 16px 80px; }
-      .topbar { gap: 16px; }
-      .week-nav { padding: 3px; }
-      .week-nav button { width: 36px; height: 36px; }
       .payment-badge { font-size: 13px; }
     }
   </style>
