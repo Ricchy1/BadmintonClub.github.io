@@ -1045,7 +1045,7 @@
     }
     .history-panel-head h2 { margin: 0; font-size: 17px; font-weight: 800; letter-spacing: -0.015em; }
     .history-panel-head p { margin: 2px 0 0; font-size: 12.5px; color: var(--ink-3); }
-    .history-table { width: 100%; border-collapse: collapse; }
+    .history-table { width: 100%; border-collapse: collapse; table-layout: auto; }
     .history-table thead th {
       text-align: left;
       font-size: 11px;
@@ -1059,6 +1059,7 @@
       position: sticky;
       top: 0;
       z-index: 2;
+      white-space: nowrap;
     }
     .history-table thead th.right { text-align: right; }
     .history-table tbody td {
@@ -1066,6 +1067,7 @@
       border-bottom: 1px solid var(--line);
       vertical-align: middle;
       font-size: 14px;
+      white-space: nowrap;
     }
     .history-table tbody tr:last-child td { border-bottom: 0; }
     .history-table tbody tr:hover { background: var(--bg); }
@@ -2135,7 +2137,7 @@ function RosterView({ people, shuttlecocks, sessions, newName, setNewName, newNa
                     <OwedPopover title={`${p.name} — unpaid sessions`} onClose={() => setOpenCell(null)} onMouseEnter={() => openHover(p.id, 'sessions')} onMouseLeave={closeHover}>
                       {sessionOwedItems[p.id].map((it, i) => (
                         <div key={i} className="owed-row">
-                          <span className="owed-row-label">{it.dayShort} · {it.date}</span>
+                          <span className="owed-row-label">{it.dayShort} · {it.date.split('-').reverse().join('/')}</span>
                           <span className="owed-row-amt mono">
                             {money(it.total)}
                             {it.surcharge > 0 && <span className="owed-row-sur"> (incl. +${it.surcharge})</span>}
@@ -2551,7 +2553,7 @@ function HistoryView({ sessions, people, shuttlecocks }) {
     const dow = d.getDay();
     const dayInfo = DAYS.find(dd => dd.dow === dow);
     const dayLabel = dayInfo ? dayInfo.short : d.toLocaleDateString(undefined, { weekday: 'short' });
-    const dateStr = d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+    const dateStr = `${pad(D)}/${pad(M)}/${Y}`;
 
     totalCourt += courtHire;
     totalSessions++;
@@ -2604,12 +2606,12 @@ function HistoryView({ sessions, people, shuttlecocks }) {
             <thead>
               <tr>
                 <th style={{ width: '10%' }}>Day</th>
-                <th style={{ width: '20%' }}>Date</th>
-                <th className="right" style={{ width: '14%' }}>Court</th>
-                <th style={{ textAlign: 'center', width: '10%' }}>Attended</th>
-                <th className="right" style={{ width: '14%' }}>Split</th>
-                <th style={{ textAlign: 'center', width: '18%' }}>Paid</th>
-                <th className="right" style={{ width: '14%' }}>Total</th>
+                <th>Date</th>
+                <th className="right">Court</th>
+                <th className="right">Attended</th>
+                <th className="right">Split</th>
+                <th className="right">Paid</th>
+                <th className="right">Total</th>
               </tr>
             </thead>
             <tbody>
@@ -2620,9 +2622,9 @@ function HistoryView({ sessions, people, shuttlecocks }) {
                     <td className="history-day-label">{r.dayLabel}</td>
                     <td className="history-date">{r.dateStr}</td>
                     <td className="right mono">{money(r.courtHire)}</td>
-                    <td className="mono" style={{ textAlign: 'center' }}>{r.attendeeCount}</td>
+                    <td className="right mono">{r.attendeeCount}</td>
                     <td className="right mono">{r.baseSplit > 0 ? money(r.baseSplit) : '—'}</td>
-                    <td style={{ textAlign: 'center' }}>
+                    <td className="right">
                       <span className={`paid-ratio ${allPaid ? 'all-paid' : ''}`}>
                         <span className="mono" style={{ color: allPaid ? '#16a34a' : '#dc2626', fontWeight: 700 }}>{r.paidCount}/{r.attendeeCount}</span>
                         <span className="bar"><span className="bar-fill" style={{ width: `${r.attendeeCount > 0 ? (r.paidCount / r.attendeeCount) * 100 : 0}%`, background: allPaid ? '#16a34a' : '#f59e0b' }} /></span>
