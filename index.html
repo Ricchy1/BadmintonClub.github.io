@@ -2278,6 +2278,7 @@ function ShuttlecocksView({ shuttlecocks, people, sessions, onAdd, onRemove, onU
           </button>
         </div>
       ) : (
+        <>
         <div className="shuttles-grid">
           {filteredShuttlecocks.length === 0 ? (
             <div className="filter-empty">
@@ -2329,6 +2330,7 @@ function ShuttlecocksView({ shuttlecocks, people, sessions, onAdd, onRemove, onU
             </div>
           </div>
         )}
+        </>
       )}
     </div>
   );
