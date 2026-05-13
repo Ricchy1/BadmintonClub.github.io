@@ -2298,6 +2298,37 @@ function ShuttlecocksView({ shuttlecocks, people, sessions, onAdd, onRemove, onU
             />
           ))}
         </div>
+        {shuttlecocks.length > 0 && (
+          <div style={{
+            marginTop: 18, padding: '14px 18px',
+            background: 'var(--surface)', border: '1px solid var(--line)',
+            borderRadius: 'var(--radius)', boxShadow: 'var(--shadow)',
+            display: 'flex', alignItems: 'center', gap: 28, flexWrap: 'wrap',
+          }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <span style={{ fontSize: 10.5, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>Total Shuttlecock Cost</span>
+              <span className="mono" style={{ fontSize: 22, fontWeight: 800 }}>
+                {money(shuttlecocks.reduce((sum, s) => sum + (Number(s.cost) || 0), 0))}
+              </span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <span style={{ fontSize: 10.5, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>Shuttlecocks</span>
+              <span className="mono" style={{ fontSize: 22, fontWeight: 800 }}>{shuttlecocks.length}</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <span style={{ fontSize: 10.5, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>Fully Paid</span>
+              <span className="mono" style={{ fontSize: 22, fontWeight: 800, color: shuttlecocks.filter(isShuttleFullyPaid).length === shuttlecocks.length ? '#16a34a' : 'var(--ink)' }}>
+                {shuttlecocks.filter(isShuttleFullyPaid).length}/{shuttlecocks.length}
+              </span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <span style={{ fontSize: 10.5, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>Avg Cost</span>
+              <span className="mono" style={{ fontSize: 22, fontWeight: 800 }}>
+                {money(shuttlecocks.reduce((sum, s) => sum + (Number(s.cost) || 0), 0) / shuttlecocks.length)}
+              </span>
+            </div>
+          </div>
+        )}
       )}
     </div>
   );
@@ -2610,7 +2641,7 @@ function HistoryView({ sessions, people, shuttlecocks }) {
                 <th className="right">Court</th>
                 <th className="right">Attended</th>
                 <th className="right">Split</th>
-                <th className="right">Paid</th>
+                <th style={{ textAlign: 'center' }}>Paid</th>
                 <th className="right">Total</th>
               </tr>
             </thead>
@@ -2624,7 +2655,7 @@ function HistoryView({ sessions, people, shuttlecocks }) {
                     <td className="right mono">{money(r.courtHire)}</td>
                     <td className="right mono">{r.attendeeCount}</td>
                     <td className="right mono">{r.baseSplit > 0 ? money(r.baseSplit) : '—'}</td>
-                    <td className="right">
+                    <td style={{ textAlign: 'center' }}>
                       <span className={`paid-ratio ${allPaid ? 'all-paid' : ''}`}>
                         <span className="mono" style={{ color: allPaid ? '#16a34a' : '#dc2626', fontWeight: 700 }}>{r.paidCount}/{r.attendeeCount}</span>
                         <span className="bar"><span className="bar-fill" style={{ width: `${r.attendeeCount > 0 ? (r.paidCount / r.attendeeCount) * 100 : 0}%`, background: allPaid ? '#16a34a' : '#f59e0b' }} /></span>
