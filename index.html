@@ -2509,17 +2509,26 @@ function ShuttlecockCard({ shuttle, people, sessions, allShuttlecocks, onRemove,
 /* ───── Mount ───── */
 /* ───── History view ───── */
 function HistoryView({ sessions, people, shuttlecocks }) {
+  const [dayFilter, setDayFilter] = React.useState('all'); // 'all', 'tue', 'wed', 'sat'
+
   const sortedDates = Object.keys(sessions).sort().reverse();
-  // Filter to only dates that have at least one attendee
   const activeDates = sortedDates.filter(date => {
     const att = sessions[date].attendance || {};
     return Object.values(att).some(Boolean);
   });
 
-  // Totals
+  // Apply day filter
+  const filteredDates = activeDates.filter(date => {
+    if (dayFilter === 'all') return true;
+    const [Y, M, D] = date.split('-').map(Number);
+    const dow = new Date(Y, M - 1, D).getDay();
+    const dayInfo = DAYS.find(dd => dd.dow === dow);
+    return dayInfo && dayInfo.key === dayFilter;
+  });
+
   let totalCourt = 0, totalSessions = 0, totalPlayerSessions = 0, totalPaid = 0, totalAttendees = 0;
 
-  const rows = activeDates.map(date => {
+  const rows = filteredDates.map(date => {
     const sess = sessions[date];
     const att = sess.attendance || {};
     const pays = sess.payments || {};
@@ -2529,7 +2538,6 @@ function HistoryView({ sessions, people, shuttlecocks }) {
     const paidCount = attendeeIds.filter(pid => pays[pid]).length;
     const baseSplit = attendeeCount > 0 && courtHire > 0 ? courtHire / attendeeCount : 0;
 
-    // Surcharges
     let surchargeTotal = 0;
     attendeeIds.forEach(pid => {
       const person = people.find(p => p.id === pid);
@@ -2538,12 +2546,11 @@ function HistoryView({ sessions, people, shuttlecocks }) {
     });
 
     const dayTotal = courtHire + surchargeTotal;
-
     const [Y, M, D] = date.split('-').map(Number);
     const d = new Date(Y, M - 1, D);
     const dow = d.getDay();
     const dayInfo = DAYS.find(dd => dd.dow === dow);
-    const dayLabel = dayInfo ? dayInfo.label : d.toLocaleDateString(undefined, { weekday: 'long' });
+    const dayLabel = dayInfo ? dayInfo.short : d.toLocaleDateString(undefined, { weekday: 'short' });
     const dateStr = d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
 
     totalCourt += courtHire;
@@ -2555,52 +2562,83 @@ function HistoryView({ sessions, people, shuttlecocks }) {
     return { date, dayLabel, dateStr, courtHire, attendeeCount, paidCount, baseSplit, surchargeTotal, dayTotal };
   });
 
+  const filterBtns = [
+    { key: 'all', label: 'All' },
+    ...DAYS.map(d => ({ key: d.key, label: d.short })),
+  ];
+
   return (
     <div className="history-panel">
       <div className="history-panel-head">
-        <h2>Session History</h2>
-        <p>All recorded sessions, most recent first.</p>
+        <div>
+          <h2>Session History</h2>
+          <p>All recorded sessions, most recent first.</p>
+        </div>
+      </div>
+      <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--line)', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        {filterBtns.map(f => (
+          <button
+            key={f.key}
+            className={`day-filter-chip ${dayFilter === f.key ? 'active' : ''}`}
+            onClick={() => setDayFilter(f.key)}
+            style={{
+              padding: '6px 14px',
+              borderRadius: 999,
+              border: '1px solid ' + (dayFilter === f.key ? 'var(--ink)' : 'var(--line-2)'),
+              background: dayFilter === f.key ? 'var(--ink)' : 'var(--surface)',
+              color: dayFilter === f.key ? 'var(--accent)' : 'var(--ink-2)',
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            {f.label}
+          </button>
+        ))}
       </div>
       {rows.length === 0 ? (
-        <div className="history-empty">No sessions recorded yet.</div>
+        <div className="history-empty">No sessions recorded{dayFilter !== 'all' ? ` for ${filterBtns.find(f => f.key === dayFilter)?.label}` : ''}.</div>
       ) : (
         <>
           <table className="history-table">
             <thead>
               <tr>
-                <th>Day</th>
-                <th>Date</th>
-                <th className="right">Court Cost</th>
-                <th style={{ textAlign: 'center' }}>Attended</th>
-                <th className="right">Base Split</th>
-                <th style={{ textAlign: 'center' }}>Paid</th>
-                <th className="right">Day Total</th>
+                <th style={{ width: '10%' }}>Day</th>
+                <th style={{ width: '20%' }}>Date</th>
+                <th className="right" style={{ width: '14%' }}>Court</th>
+                <th style={{ textAlign: 'center', width: '10%' }}>Attended</th>
+                <th className="right" style={{ width: '14%' }}>Split</th>
+                <th style={{ textAlign: 'center', width: '18%' }}>Paid</th>
+                <th className="right" style={{ width: '14%' }}>Total</th>
               </tr>
             </thead>
             <tbody>
-              {rows.map(r => (
-                <tr key={r.date}>
-                  <td className="history-day-label">{r.dayLabel}</td>
-                  <td className="history-date">{r.dateStr}</td>
-                  <td className="right mono">{money(r.courtHire)}</td>
-                  <td className="mono" style={{ textAlign: 'center' }}>{r.attendeeCount}</td>
-                  <td className="right mono">{r.baseSplit > 0 ? money(r.baseSplit) : '—'}</td>
-                  <td style={{ textAlign: 'center' }}>
-                    <span className={`paid-ratio ${r.paidCount === r.attendeeCount ? 'all-paid' : ''}`}>
-                      <span className="mono" style={{ color: r.paidCount === r.attendeeCount ? 'var(--paid)' : 'var(--danger)' }}>{r.paidCount}/{r.attendeeCount}</span>
-                      <span className="bar"><span className="bar-fill" style={{ width: `${r.attendeeCount > 0 ? (r.paidCount / r.attendeeCount) * 100 : 0}%` }} /></span>
-                    </span>
-                  </td>
-                  <td className="right mono" style={{ fontWeight: 700 }}>{money(r.dayTotal)}</td>
-                </tr>
-              ))}
+              {rows.map(r => {
+                const allPaid = r.paidCount === r.attendeeCount && r.attendeeCount > 0;
+                return (
+                  <tr key={r.date}>
+                    <td className="history-day-label">{r.dayLabel}</td>
+                    <td className="history-date">{r.dateStr}</td>
+                    <td className="right mono">{money(r.courtHire)}</td>
+                    <td className="mono" style={{ textAlign: 'center' }}>{r.attendeeCount}</td>
+                    <td className="right mono">{r.baseSplit > 0 ? money(r.baseSplit) : '—'}</td>
+                    <td style={{ textAlign: 'center' }}>
+                      <span className={`paid-ratio ${allPaid ? 'all-paid' : ''}`}>
+                        <span className="mono" style={{ color: allPaid ? '#16a34a' : '#dc2626', fontWeight: 700 }}>{r.paidCount}/{r.attendeeCount}</span>
+                        <span className="bar"><span className="bar-fill" style={{ width: `${r.attendeeCount > 0 ? (r.paidCount / r.attendeeCount) * 100 : 0}%`, background: allPaid ? '#16a34a' : '#f59e0b' }} /></span>
+                      </span>
+                    </td>
+                    <td className="right mono" style={{ fontWeight: 700 }}>{money(r.dayTotal)}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
           <div className="history-summary">
-            <div className="hs-item"><span className="hs-label">Total Sessions</span><span className="hs-value">{totalSessions}</span></div>
-            <div className="hs-item"><span className="hs-label">Total Court Hire</span><span className="hs-value">{money(totalCourt)}</span></div>
+            <div className="hs-item"><span className="hs-label">Sessions</span><span className="hs-value">{totalSessions}</span></div>
+            <div className="hs-item"><span className="hs-label">Court Hire</span><span className="hs-value">{money(totalCourt)}</span></div>
             <div className="hs-item"><span className="hs-label">Player-Sessions</span><span className="hs-value">{totalPlayerSessions}</span></div>
-            <div className="hs-item"><span className="hs-label">Paid</span><span className="hs-value" style={{ color: totalPaid === totalAttendees ? 'var(--paid)' : 'var(--danger)' }}>{totalPaid}/{totalAttendees}</span></div>
+            <div className="hs-item"><span className="hs-label">Paid</span><span className="hs-value" style={{ color: totalPaid === totalAttendees && totalAttendees > 0 ? '#16a34a' : '#dc2626' }}>{totalPaid}/{totalAttendees}</span></div>
           </div>
         </>
       )}
