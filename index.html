@@ -1267,6 +1267,10 @@ function fmtWeekRange(start) {
 const money = (n) => `$${(Math.round(n * 100) / 100).toFixed(2)}`;
 
 /* ───── Supabase Persistence ───── */
+
+/* Unique ID for this browser tab — used to identify our own realtime echoes */
+const DEVICE_ID = Math.random().toString(36).slice(2, 10);
+
 async function loadStateFromDB() {
   try {
     const { data, error } = await supabase.from('app_state').select('data').eq('id', DB_ROW_ID).single();
@@ -1279,10 +1283,38 @@ function saveStateToDB(s) {
   clearTimeout(_saveTimer);
   _saveTimer = setTimeout(async () => {
     try {
-      const { error } = await supabase.from('app_state').upsert({ id: DB_ROW_ID, data: s, updated_at: new Date().toISOString() });
+      /* Tag the payload with our device ID so our realtime echo can be identified */
+      const payload = { ...s, _writer: DEVICE_ID };
+      const { error } = await supabase.from('app_state').upsert({ id: DB_ROW_ID, data: payload, updated_at: new Date().toISOString() });
       if (error) console.error('Save error:', error); else console.log('Saved to Supabase OK');
     } catch (e) { console.error('Save failed:', e); }
-  }, 400);
+  }, 300);
+}
+
+/**
+ * Merge remote state into local state so concurrent changes on different
+ * devices don't overwrite each other. Sessions are merged at the
+ * attendance/payment field level; arrays (people, shuttlecocks) use the
+ * remote version since structural edits are rare.
+ */
+function mergeStates(local, remote) {
+  /* Merge sessions: for each date, merge attendance + payments objects */
+  const mergedSessions = { ...remote.sessions };
+  if (local.sessions) {
+    for (const date of Object.keys(local.sessions)) {
+      const ls = local.sessions[date] || {};
+      const rs = mergedSessions[date] || {};
+      mergedSessions[date] = {
+        courtHire: rs.courtHire !== undefined ? rs.courtHire : ls.courtHire,
+        attendance: { ...ls.attendance, ...rs.attendance },
+        payments: { ...ls.payments, ...rs.payments },
+      };
+    }
+  }
+  return {
+    ...remote,
+    sessions: mergedSessions,
+  };
 }
 
 /* Seed state — small example so the app isn't empty on first load */
@@ -1310,8 +1342,13 @@ function App() {
   const [tab, setTab] = useState('sessions');
   const [newName, setNewName] = useState('');
   const newNameRef = useRef(null);
-  const skipNextRealtime = useRef(false);
   const loaded = useRef(false);
+  /*
+   * isRemoteUpdate: set to true RIGHT BEFORE applying a realtime payload.
+   * The save-effect checks this and skips saving, preventing the bounce loop:
+   *   remote update → setState → save-effect sees isRemoteUpdate → skips → no echo
+   */
+  const isRemoteUpdate = useRef(false);
 
   // Load from Supabase on mount
   useEffect(() => {
@@ -1328,10 +1365,14 @@ function App() {
     });
   }, []);
 
-  // Save to Supabase on state change
+  // Save to Supabase on LOCAL state changes only
   useEffect(() => {
     if (!state || !loaded.current) return;
-    skipNextRealtime.current = true;
+    /* If this state change came from a realtime update, don't save it back */
+    if (isRemoteUpdate.current) {
+      isRemoteUpdate.current = false;
+      return;
+    }
     saveStateToDB({ ...state, activeTab: tab });
   }, [state, tab]);
 
@@ -1341,11 +1382,14 @@ function App() {
       .channel('app_state_realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'app_state', filter: `id=eq.${DB_ROW_ID}` },
         (payload) => {
-          if (skipNextRealtime.current) { skipNextRealtime.current = false; return; }
-          if (payload.new && payload.new.data) {
-            setState(payload.new.data);
-            if (payload.new.data.activeTab) setTab(payload.new.data.activeTab);
-          }
+          if (!payload.new || !payload.new.data) return;
+          const incoming = payload.new.data;
+          /* Ignore our own echoes — we already have this state locally */
+          if (incoming._writer === DEVICE_ID) return;
+          /* Flag so the save-effect knows not to write this back to DB */
+          isRemoteUpdate.current = true;
+          setState(prev => prev ? mergeStates(prev, incoming) : incoming);
+          if (incoming.activeTab) setTab(incoming.activeTab);
         }
       ).subscribe();
     return () => { supabase.removeChannel(channel); };
