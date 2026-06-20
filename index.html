@@ -736,7 +736,7 @@
 
     /* ───── Week summary bar ───── */
     .week-summary {
-      margin-top: 18px;
+      margin-bottom: 18px;
       padding: 14px 18px;
       background: var(--surface);
       border: 1px solid var(--line);
@@ -1716,6 +1716,29 @@ function SessionsView({ weekStart, state, peopleById, shuttlecocks, todayIso, on
 
   return (
     <>
+      <div className="week-summary">
+        <div className="ws-item">
+          <span className="label">Week total</span>
+          <span className="value mono">{money(weekTotal)}</span>
+        </div>
+        <div className="ws-item">
+          <span className="label">Court hire</span>
+          <span className="value mono">{money(weekCourt)}</span>
+        </div>
+        <div className="ws-item">
+          <span className="label">Player-sessions</span>
+          <span className="value mono">{weekAttendees}</span>
+        </div>
+        {weekSurchargeCount > 0 && (
+          <div className="ws-item">
+            <span className="label" style={{ color: 'var(--warn)' }}>incl. +${SHUTTLE_SURCHARGE} × {weekSurchargeCount}</span>
+            <span className="value mono" style={{ color: 'var(--warn)' }}>+{money(weekSurcharge)}</span>
+          </div>
+        )}
+        <div className="ws-spacer" />
+        <div className="ws-note mono">+{money(SHUTTLE_SURCHARGE)} shuttle surcharge applies on sessions not covered by a shuttlecock card</div>
+      </div>
+
       <div className="day-filters">
         <div className="day-filters-group">
           <span className="day-filters-label">Show</span>
@@ -1757,29 +1780,6 @@ function SessionsView({ weekStart, state, peopleById, shuttlecocks, todayIso, on
             onSwitchToRoster={onSwitchToRoster}
           />
         ))}
-      </div>
-
-      <div className="week-summary">
-        <div className="ws-item">
-          <span className="label">Week total</span>
-          <span className="value mono">{money(weekTotal)}</span>
-        </div>
-        <div className="ws-item">
-          <span className="label">Court hire</span>
-          <span className="value mono">{money(weekCourt)}</span>
-        </div>
-        <div className="ws-item">
-          <span className="label">Player-sessions</span>
-          <span className="value mono">{weekAttendees}</span>
-        </div>
-        {weekSurchargeCount > 0 && (
-          <div className="ws-item">
-            <span className="label" style={{ color: 'var(--warn)' }}>incl. +${SHUTTLE_SURCHARGE} × {weekSurchargeCount}</span>
-            <span className="value mono" style={{ color: 'var(--warn)' }}>+{money(weekSurcharge)}</span>
-          </div>
-        )}
-        <div className="ws-spacer" />
-        <div className="ws-note mono">+{money(SHUTTLE_SURCHARGE)} shuttle surcharge applies on sessions not covered by a shuttlecock card</div>
       </div>
     </>
   );
@@ -1852,7 +1852,14 @@ function DayCard({ di, allPeople, peopleById, shuttlecocks, isToday, isPast, onS
             <button onClick={onSwitchToRoster}>Manage people →</button>
           </li>
         )}
-        {di.roster.map(p => {
+        {[...di.roster]
+          .sort((a, b) => {
+            const aAtt = !!di.session.attendance[a.id];
+            const bAtt = !!di.session.attendance[b.id];
+            if (aAtt !== bAtt) return aAtt ? -1 : 1;
+            return (a.name || '').localeCompare(b.name || '');
+          })
+          .map(p => {
           const attended = !!di.session.attendance[p.id];
           const paid = !!(di.session.payments && di.session.payments[p.id]);
           const covered = isCoveredOn(p.id, di.iso, shuttlecocks);
