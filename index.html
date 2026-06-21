@@ -772,6 +772,117 @@
       color: var(--ink-2);
     }
 
+    /* ── Court bookings view ── */
+    .court-bookings-view { padding: 0; }
+    .court-bookings-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .court-bookings-subtitle {
+      font-size: 15px;
+      color: var(--ink-2);
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+    .court-bookings-subtitle strong { color: var(--ink); }
+    .court-bookings-date {
+      font-size: 13px;
+      color: var(--ink-3);
+      margin-bottom: 14px;
+    }
+    .court-booked-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .court-booked-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .court-booked-chip.row1 { background: #e6f4ea; color: #1a7431; }
+    .court-booked-chip.row2 { background: #e0e7ff; color: #2b3d8f; }
+    .court-booked-none { font-size: 13px; color: var(--ink-3); font-style: italic; }
+
+    .court-layout {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 20px;
+    }
+    .court-layout-title {
+      text-align: center;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      margin-bottom: 16px;
+    }
+    .court-row-label {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 999px;
+      display: inline-block;
+      margin: 0 auto 8px;
+      width: fit-content;
+    }
+    .court-row-label.r1 { background: #e6f4ea; color: #1a7431; }
+    .court-row-label.r2 { background: #e0e7ff; color: #2b3d8f; }
+    .court-row-wrap { text-align: center; margin-bottom: 14px; }
+    .court-row {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .court-cell {
+      aspect-ratio: 1;
+      border-radius: 10px;
+      border: 2.5px solid;
+      font-size: 20px;
+      font-weight: 800;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: all 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .court-cell.r1 {
+      border-color: #34a853;
+      color: #34a853;
+      background: #f3faf5;
+    }
+    .court-cell.r1.booked {
+      background: #34a853;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(52,168,83,0.35);
+      transform: scale(1.04);
+    }
+    .court-cell.r2 {
+      border-color: #3b5bdb;
+      color: #3b5bdb;
+      background: #f0f3ff;
+    }
+    .court-cell.r2.booked {
+      background: #3b5bdb;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(59,91,219,0.35);
+      transform: scale(1.04);
+    }
+    .court-cell:active { transform: scale(0.95); }
+
     /* ── Outstanding toggle (sessions) ── */
     .outstanding-toggle {
       padding: 6px 14px;
@@ -1738,6 +1849,16 @@ function App() {
   function toggleDayVisibility(dayKey) {
     setHiddenDays(prev => prev.includes(dayKey) ? prev.filter(d => d !== dayKey) : [...prev, dayKey]);
   }
+  function toggleCourtBooking(dateIso, courtNum) {
+    setState(s => {
+      const bookings = { ...(s.courtBookings || {}) };
+      const courts = [...(bookings[dateIso] || [])];
+      const idx = courts.indexOf(courtNum);
+      if (idx >= 0) courts.splice(idx, 1); else courts.push(courtNum);
+      bookings[dateIso] = courts;
+      return { ...s, courtBookings: bookings };
+    });
+  }
 
   /* week navigation */
   const goToToday = () => setWeekStart(startOfWeek(new Date()));
@@ -1786,6 +1907,9 @@ function App() {
       </header>
 
       <div className="tabs" role="tablist">
+        <button className={`tab ${tab === 'courts' ? 'active' : ''}`} onClick={() => setTab('courts')} role="tab">
+          Courts
+        </button>
         <button className={`tab ${tab === 'sessions' ? 'active' : ''}`} onClick={() => setTab('sessions')} role="tab">
           Sessions
         </button>
@@ -1799,6 +1923,13 @@ function App() {
           History
         </button>
       </div>
+
+      {tab === 'courts' && (
+        <CourtBookingsView
+          state={state}
+          onToggleCourt={toggleCourtBooking}
+        />
+      )}
 
       {tab === 'sessions' && (
         <SessionsView
@@ -1881,6 +2012,84 @@ function StatusFilter({ value, onChange }) {
           {o.label}
         </button>
       ))}
+    </div>
+  );
+}
+
+/* ───── Sessions view ───── */
+/* ───── Court bookings view ───── */
+function CourtBookingsView({ state, onToggleCourt }) {
+  const today = new Date();
+  const todayDow = today.getDay(); // 0=Sun
+
+  // Find next session day (Tue=2, Wed=3, Sat=6) including today
+  const sessionDows = [2, 3, 6];
+  let nextDow = sessionDows.find(d => d >= todayDow);
+  let daysUntil;
+  if (nextDow !== undefined) {
+    daysUntil = nextDow - todayDow;
+  } else {
+    nextDow = sessionDows[0];
+    daysUntil = 7 - todayDow + nextDow;
+  }
+  const nextDate = addDays(today, daysUntil);
+  nextDate.setHours(0, 0, 0, 0);
+  const nextIso = isoDate(nextDate);
+  const nextDayName = nextDate.toLocaleDateString(undefined, { weekday: 'long' });
+  const nextDateStr = nextDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  const isToday = daysUntil === 0;
+
+  const bookedCourts = ((state.courtBookings || {})[nextIso] || []).slice().sort((a, b) => a - b);
+  const row1 = [1, 2, 3, 4, 5, 6, 7];
+  const row2 = [14, 13, 12, 11, 10, 9, 8];
+
+  return (
+    <div className="court-bookings-view">
+      <div className="court-bookings-card">
+        <div className="court-bookings-subtitle">
+          Court bookings for {isToday ? "today's" : 'the next upcoming'} <strong>{nextDayName}</strong> session{isToday ? '' : ' are'}:
+        </div>
+        <div className="court-bookings-date">{nextDateStr}</div>
+        <div className="court-booked-chips">
+          {bookedCourts.length === 0 ? (
+            <span className="court-booked-none">No courts booked yet — tap a court below</span>
+          ) : bookedCourts.map(c => (
+            <span key={c} className={`court-booked-chip ${c <= 7 ? 'row1' : 'row2'}`}>
+              Court {c}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className="court-layout">
+        <div className="court-layout-title">Floor Plan</div>
+
+        <div className="court-row-wrap">
+          <div className="court-row-label r1">Row 1 — Badminton</div>
+        </div>
+        <div className="court-row">
+          {row1.map(n => (
+            <button key={n}
+              className={`court-cell r1 ${bookedCourts.includes(n) ? 'booked' : ''}`}
+              onClick={() => onToggleCourt(nextIso, n)}>
+              {n}
+            </button>
+          ))}
+        </div>
+
+        <div className="court-row-wrap">
+          <div className="court-row-label r2">Row 2 — Table Tennis</div>
+        </div>
+        <div className="court-row">
+          {row2.map(n => (
+            <button key={n}
+              className={`court-cell r2 ${bookedCourts.includes(n) ? 'booked' : ''}`}
+              onClick={() => onToggleCourt(nextIso, n)}>
+              {n}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
