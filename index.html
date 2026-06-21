@@ -635,6 +635,23 @@
       border-bottom: 1px solid var(--line);
       background: var(--surface);
     }
+    .people-table thead th.sortable {
+      cursor: pointer;
+      user-select: none;
+      transition: color 0.12s ease;
+    }
+    .people-table thead th.sortable:hover { color: var(--ink); }
+    .people-table thead th.sortable.active { color: var(--ink); }
+    .sort-indicator {
+      display: inline-block;
+      margin-left: 4px;
+      font-size: 10px;
+      vertical-align: middle;
+      opacity: 0.4;
+    }
+    .sortable.active .sort-indicator { opacity: 1; }
+    .sortable:not(.active) .sort-indicator { visibility: hidden; }
+    .sortable:hover .sort-indicator { visibility: visible; }
     .people-table thead th.center { text-align: center; }
     .people-table tbody td {
       padding: 12px 16px;
@@ -2074,6 +2091,56 @@ function RosterView({ people, shuttlecocks, sessions, newName, setNewName, newNa
   const [focusedId, setFocusedId] = React.useState(null);
   const focusedPerson = focusedId ? people.find(p => p.id === focusedId) : null;
   React.useEffect(() => { if (focusedId && !people.some(p => p.id === focusedId)) setFocusedId(null); }, [people, focusedId]);
+
+  /* ── Sortable columns ── */
+  const [sortCol, setSortCol] = React.useState(null);   // null | 'name' | 'days' | 'langdon' | 'coverage' | 'owes_sessions' | 'owes_shuttles' | 'total'
+  const [sortDir, setSortDir] = React.useState('asc');   // 'asc' | 'desc'
+  const toggleSort = (col) => {
+    if (sortCol === col) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortCol(col);
+      setSortDir(col === 'name' || col === 'days' || col === 'langdon' || col === 'coverage' ? 'asc' : 'desc');
+    }
+  };
+  const sortArrow = (col) => {
+    const active = sortCol === col;
+    const dir = active ? sortDir : 'asc';
+    return <span className="sort-indicator">{dir === 'asc' ? '▲' : '▼'}</span>;
+  };
+
+  const sortedPeople = React.useMemo(() => {
+    if (!sortCol) return people;
+    const arr = [...people];
+    const dir = sortDir === 'asc' ? 1 : -1;
+    arr.sort((a, b) => {
+      let va, vb;
+      switch (sortCol) {
+        case 'name':
+          return dir * (a.name || '').localeCompare(b.name || '');
+        case 'days':
+          return dir * ((a.days || []).length - (b.days || []).length);
+        case 'langdon':
+          va = a.langdon ? 1 : 0;
+          vb = b.langdon ? 1 : 0;
+          return dir * (va - vb);
+        case 'coverage':
+          va = (a.langdon || coveredById[a.id]) ? 1 : 0;
+          vb = (b.langdon || coveredById[b.id]) ? 1 : 0;
+          return dir * (va - vb);
+        case 'owes_sessions':
+          return dir * ((sessionOwed[a.id] || 0) - (sessionOwed[b.id] || 0));
+        case 'owes_shuttles':
+          return dir * ((shuttleOwed[a.id] || 0) - (shuttleOwed[b.id] || 0));
+        case 'total':
+          va = (sessionOwed[a.id] || 0) + (shuttleOwed[a.id] || 0);
+          vb = (sessionOwed[b.id] || 0) + (shuttleOwed[b.id] || 0);
+          return dir * (va - vb);
+        default: return 0;
+      }
+    });
+    return arr;
+  }, [people, sortCol, sortDir, coveredById, sessionOwed, shuttleOwed]);
   return (
     <div className="roster-panel">
       <div className="roster-panel-head">
@@ -2114,18 +2181,32 @@ function RosterView({ people, shuttlecocks, sessions, newName, setNewName, newNa
         <table className="people-table">
           <thead>
             <tr>
-              <th>Name</th>
-              <th className="center" style={{ width: 180 }}>Regular days</th>
-              <th className="center" style={{ width: 100 }}>Langdon</th>
-              <th className="center" style={{ width: 170 }}>Shuttle coverage</th>
-              <th className="right" style={{ width: 120 }}>Owes (sessions)</th>
-              <th className="right" style={{ width: 130 }}>Owes (shuttles)</th>
-              <th className="right" style={{ width: 110 }}>Total owed</th>
+              <th className={`sortable ${sortCol === 'name' ? 'active' : ''}`} onClick={() => toggleSort('name')}>
+                Name {sortArrow('name')}
+              </th>
+              <th className={`center sortable ${sortCol === 'days' ? 'active' : ''}`} style={{ width: 180 }} onClick={() => toggleSort('days')}>
+                Regular days {sortArrow('days')}
+              </th>
+              <th className={`center sortable ${sortCol === 'langdon' ? 'active' : ''}`} style={{ width: 100 }} onClick={() => toggleSort('langdon')}>
+                Langdon {sortArrow('langdon')}
+              </th>
+              <th className={`center sortable ${sortCol === 'coverage' ? 'active' : ''}`} style={{ width: 170 }} onClick={() => toggleSort('coverage')}>
+                Shuttle coverage {sortArrow('coverage')}
+              </th>
+              <th className={`right sortable ${sortCol === 'owes_sessions' ? 'active' : ''}`} style={{ width: 120 }} onClick={() => toggleSort('owes_sessions')}>
+                Owes (sessions) {sortArrow('owes_sessions')}
+              </th>
+              <th className={`right sortable ${sortCol === 'owes_shuttles' ? 'active' : ''}`} style={{ width: 130 }} onClick={() => toggleSort('owes_shuttles')}>
+                Owes (shuttles) {sortArrow('owes_shuttles')}
+              </th>
+              <th className={`right sortable ${sortCol === 'total' ? 'active' : ''}`} style={{ width: 110 }} onClick={() => toggleSort('total')}>
+                Total owed {sortArrow('total')}
+              </th>
               <th style={{ width: 60 }}></th>
             </tr>
           </thead>
           <tbody>
-            {people.map(p => {
+            {sortedPeople.map(p => {
               const isFocused = focusedId === p.id;
               const isDimmed = focusedId && !isFocused;
               return (
