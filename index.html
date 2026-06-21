@@ -620,10 +620,6 @@
     .add-person button:hover { background: #000; }
     .add-person button:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    .people-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
     .people-table thead th {
       text-align: left;
       font-size: 13px;
@@ -634,24 +630,136 @@
       padding: 12px 16px;
       border-bottom: 1px solid var(--line);
       background: var(--surface);
+      overflow: visible;
     }
     .people-table thead th.sortable {
-      cursor: pointer;
+      cursor: default;
       user-select: none;
-      transition: color 0.12s ease;
     }
-    .people-table thead th.sortable:hover { color: var(--ink); }
-    .people-table thead th.sortable.active { color: var(--ink); }
-    .sort-indicator {
-      display: inline-block;
-      margin-left: 4px;
-      font-size: 10px;
-      vertical-align: middle;
+    .col-header {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      position: relative;
+    }
+    .col-header.right { justify-content: flex-end; }
+    .col-header.center { justify-content: center; }
+    .col-header-name {
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: background 0.12s;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+    .col-header-name:hover { background: var(--bg-2); color: var(--ink); }
+    .col-header-name.has-filter { color: var(--accent-ink); }
+    .col-header-name .filter-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent-ink);
+      flex-shrink: 0;
+    }
+    .col-sort-btn {
+      width: 20px; height: 20px;
+      border: 0; background: transparent;
+      border-radius: 4px;
+      display: inline-grid;
+      place-items: center;
+      font-size: 9px;
+      color: var(--ink-3);
+      cursor: pointer;
+      flex-shrink: 0;
       opacity: 0.4;
+      transition: opacity 0.12s, background 0.12s, color 0.12s;
     }
-    .sortable.active .sort-indicator { opacity: 1; }
-    .sortable:not(.active) .sort-indicator { visibility: hidden; }
-    .sortable:hover .sort-indicator { visibility: visible; }
+    .col-sort-btn:hover { opacity: 1; background: var(--bg-2); color: var(--ink); }
+    .col-sort-btn.active { opacity: 1; color: var(--ink); }
+    .table-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .people-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      min-width: 860px;
+    }
+
+    /* ── Filter popup ── */
+    .filter-popup-overlay {
+      position: fixed; inset: 0; z-index: 99;
+    }
+    .filter-popup {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      z-index: 100;
+      min-width: 200px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      padding: 10px;
+    }
+    .filter-popup.align-right { left: auto; right: 0; }
+    .filter-popup-search {
+      width: 100%;
+      border: 1px solid var(--line-2);
+      border-radius: 6px;
+      padding: 7px 10px;
+      font-size: 13px;
+      outline: none;
+      font-family: inherit;
+      box-sizing: border-box;
+    }
+    .filter-popup-search:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(74,108,64,0.15); }
+    .filter-popup-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--ink-3);
+      margin-bottom: 6px;
+    }
+    .filter-popup-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 4px;
+    }
+    .filter-opt {
+      padding: 5px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--line-2);
+      background: var(--surface);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--ink-2);
+      transition: all 0.1s;
+      white-space: nowrap;
+    }
+    .filter-opt:hover { border-color: var(--ink-2); }
+    .filter-opt.on {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: var(--accent);
+    }
+    .filter-clear-btn {
+      width: 100%;
+      margin-top: 8px;
+      padding: 5px;
+      border: 0;
+      background: transparent;
+      font-size: 11px;
+      color: var(--ink-3);
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .filter-clear-btn:hover { background: var(--bg-2); color: var(--danger); }
     .people-table thead th.center { text-align: center; }
     .people-table tbody td {
       padding: 12px 16px;
@@ -1173,8 +1281,10 @@
       .add-person { padding: 12px 14px; }
       .add-person input { font-size: 16px; padding: 10px 14px; }
       .add-person button { font-size: 15px; padding: 10px 18px; }
-      .people-table thead th { font-size: 12px; padding: 12px 10px; }
-      .people-table tbody td { padding: 12px 10px; }
+      .people-table thead th { font-size: 11px; padding: 12px 8px; }
+      .people-table tbody td { padding: 12px 8px; }
+      .col-header-name { font-size: 10px; padding: 2px 3px; }
+      .col-sort-btn { width: 18px; height: 18px; font-size: 8px; }
       .name-cell, .name-cell input { font-size: 16px; }
       .day-chip { font-size: 13px; width: 42px; height: 32px; }
       .coverage-badge { font-size: 12px; padding: 5px 10px; }
@@ -2091,8 +2201,8 @@ function RosterView({ people, shuttlecocks, sessions, newName, setNewName, newNa
   React.useEffect(() => { if (focusedId && !people.some(p => p.id === focusedId)) setFocusedId(null); }, [people, focusedId]);
 
   /* ── Sortable columns ── */
-  const [sortCol, setSortCol] = React.useState(null);   // null | 'name' | 'days' | 'langdon' | 'coverage' | 'owes_sessions' | 'owes_shuttles' | 'total'
-  const [sortDir, setSortDir] = React.useState('asc');   // 'asc' | 'desc'
+  const [sortCol, setSortCol] = React.useState(null);
+  const [sortDir, setSortDir] = React.useState('asc');
   const toggleSort = (col) => {
     if (sortCol === col) {
       setSortDir(d => d === 'asc' ? 'desc' : 'asc');
@@ -2101,15 +2211,53 @@ function RosterView({ people, shuttlecocks, sessions, newName, setNewName, newNa
       setSortDir(col === 'name' || col === 'days' || col === 'langdon' || col === 'coverage' ? 'asc' : 'desc');
     }
   };
-  const sortArrow = (col) => {
-    const active = sortCol === col;
-    const dir = active ? sortDir : 'asc';
-    return <span className="sort-indicator">{dir === 'asc' ? '▲' : '▼'}</span>;
+
+  /* ── Filter state ── */
+  const [filters, setFilters] = React.useState({
+    name: '',
+    days: [],
+    langdon: null,
+    coverage: null,
+    owes_sessions: null,
+    owes_shuttles: null,
+    total: null,
+  });
+  const [filterOpen, setFilterOpen] = React.useState(null);
+  const setFilter = (key, val) => setFilters(f => ({ ...f, [key]: val }));
+  const hasFilter = (key) => {
+    const v = filters[key];
+    if (v === null || v === '' || v === undefined) return false;
+    if (Array.isArray(v)) return v.length > 0;
+    return true;
   };
+  const clearFilter = (key) => {
+    setFilters(f => ({ ...f, [key]: Array.isArray(f[key]) ? [] : (typeof f[key] === 'string' ? '' : null) }));
+  };
+  const anyFilterActive = Object.keys(filters).some(k => hasFilter(k));
+
+  /* ── Apply filters then sort ── */
+  const filteredPeople = React.useMemo(() => {
+    return people.filter(p => {
+      if (filters.name && !(p.name || '').toLowerCase().includes(filters.name.toLowerCase())) return false;
+      if (filters.days.length > 0 && !filters.days.some(d => (p.days || []).includes(d))) return false;
+      if (filters.langdon === true && !p.langdon) return false;
+      if (filters.langdon === false && p.langdon) return false;
+      if (filters.coverage === 'covered' && !(p.langdon || coveredById[p.id])) return false;
+      if (filters.coverage === 'not_covered' && (p.langdon || coveredById[p.id])) return false;
+      if (filters.owes_sessions === 'has_balance' && (sessionOwed[p.id] || 0) <= 0) return false;
+      if (filters.owes_sessions === 'zero' && (sessionOwed[p.id] || 0) > 0) return false;
+      if (filters.owes_shuttles === 'has_balance' && (shuttleOwed[p.id] || 0) <= 0) return false;
+      if (filters.owes_shuttles === 'zero' && (shuttleOwed[p.id] || 0) > 0) return false;
+      const total = (sessionOwed[p.id] || 0) + (shuttleOwed[p.id] || 0);
+      if (filters.total === 'has_balance' && total <= 0) return false;
+      if (filters.total === 'zero' && total > 0) return false;
+      return true;
+    });
+  }, [people, filters, coveredById, sessionOwed, shuttleOwed]);
 
   const sortedPeople = React.useMemo(() => {
-    if (!sortCol) return people;
-    const arr = [...people];
+    if (!sortCol) return filteredPeople;
+    const arr = [...filteredPeople];
     const dir = sortDir === 'asc' ? 1 : -1;
     arr.sort((a, b) => {
       let va, vb;
@@ -2138,7 +2286,7 @@ function RosterView({ people, shuttlecocks, sessions, newName, setNewName, newNa
       }
     });
     return arr;
-  }, [people, sortCol, sortDir, coveredById, sessionOwed, shuttleOwed]);
+  }, [filteredPeople, sortCol, sortDir, coveredById, sessionOwed, shuttleOwed]);
   return (
     <div className="roster-panel">
       <div className="roster-panel-head">
@@ -2176,31 +2324,182 @@ function RosterView({ people, shuttlecocks, sessions, newName, setNewName, newNa
           No players yet — add the first one above.
         </div>
       ) : (
+        <div className="table-scroll">
+        {anyFilterActive && (
+          <div style={{ padding: '8px 10px', display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--ink-3)' }}>
+            <span>Showing {sortedPeople.length} of {people.length} players</span>
+            <button className="filter-clear-btn" style={{ width: 'auto', margin: 0, padding: '3px 8px', fontSize: 11 }}
+              onClick={() => setFilters({ name: '', days: [], langdon: null, coverage: null, owes_sessions: null, owes_shuttles: null, total: null })}>
+              Clear all filters
+            </button>
+          </div>
+        )}
         <table className="people-table">
           <thead>
             <tr>
-              <th className={`sortable ${sortCol === 'name' ? 'active' : ''}`} onClick={() => toggleSort('name')}>
-                Name {sortArrow('name')}
+              {/* ── Name ── */}
+              <th className="sortable" style={{ width: '20%' }}>
+                <div className="col-header">
+                  <span className={`col-header-name ${hasFilter('name') ? 'has-filter' : ''}`}
+                    onClick={() => setFilterOpen(f => f === 'name' ? null : 'name')}>
+                    Name {hasFilter('name') && <span className="filter-dot" />}
+                  </span>
+                  <button className={`col-sort-btn ${sortCol === 'name' ? 'active' : ''}`} onClick={() => toggleSort('name')}>
+                    {sortCol === 'name' ? (sortDir === 'asc' ? '▲' : '▼') : '▲'}
+                  </button>
+                  {filterOpen === 'name' && (<>
+                    <div className="filter-popup-overlay" onClick={() => setFilterOpen(null)} />
+                    <div className="filter-popup">
+                      <input className="filter-popup-search" placeholder="Search names…" autoFocus
+                        value={filters.name} onChange={e => setFilter('name', e.target.value)} />
+                      {hasFilter('name') && <button className="filter-clear-btn" onClick={() => { clearFilter('name'); setFilterOpen(null); }}>Clear</button>}
+                    </div>
+                  </>)}
+                </div>
               </th>
-              <th className={`center sortable ${sortCol === 'days' ? 'active' : ''}`} style={{ width: 180 }} onClick={() => toggleSort('days')}>
-                Regular days {sortArrow('days')}
+              {/* ── Regular days ── */}
+              <th className="sortable center" style={{ width: '15%' }}>
+                <div className="col-header center">
+                  <span className={`col-header-name ${hasFilter('days') ? 'has-filter' : ''}`}
+                    onClick={() => setFilterOpen(f => f === 'days' ? null : 'days')}>
+                    Regular days {hasFilter('days') && <span className="filter-dot" />}
+                  </span>
+                  <button className={`col-sort-btn ${sortCol === 'days' ? 'active' : ''}`} onClick={() => toggleSort('days')}>
+                    {sortCol === 'days' ? (sortDir === 'asc' ? '▲' : '▼') : '▲'}
+                  </button>
+                  {filterOpen === 'days' && (<>
+                    <div className="filter-popup-overlay" onClick={() => setFilterOpen(null)} />
+                    <div className="filter-popup">
+                      <div className="filter-popup-label">Plays on</div>
+                      <div className="filter-popup-options">
+                        {DAYS.map(d => (
+                          <button key={d.key} className={`filter-opt ${filters.days.includes(d.key) ? 'on' : ''}`}
+                            onClick={() => setFilter('days', filters.days.includes(d.key) ? filters.days.filter(x => x !== d.key) : [...filters.days, d.key])}>
+                            {d.short}
+                          </button>
+                        ))}
+                      </div>
+                      {hasFilter('days') && <button className="filter-clear-btn" onClick={() => { clearFilter('days'); setFilterOpen(null); }}>Clear</button>}
+                    </div>
+                  </>)}
+                </div>
               </th>
-              <th className={`center sortable ${sortCol === 'langdon' ? 'active' : ''}`} style={{ width: 100 }} onClick={() => toggleSort('langdon')}>
-                Langdon {sortArrow('langdon')}
+              {/* ── Langdon ── */}
+              <th className="sortable center" style={{ width: '10%' }}>
+                <div className="col-header center">
+                  <span className={`col-header-name ${hasFilter('langdon') ? 'has-filter' : ''}`}
+                    onClick={() => setFilterOpen(f => f === 'langdon' ? null : 'langdon')}>
+                    Langdon {hasFilter('langdon') && <span className="filter-dot" />}
+                  </span>
+                  <button className={`col-sort-btn ${sortCol === 'langdon' ? 'active' : ''}`} onClick={() => toggleSort('langdon')}>
+                    {sortCol === 'langdon' ? (sortDir === 'asc' ? '▲' : '▼') : '▲'}
+                  </button>
+                  {filterOpen === 'langdon' && (<>
+                    <div className="filter-popup-overlay" onClick={() => setFilterOpen(null)} />
+                    <div className="filter-popup">
+                      <div className="filter-popup-options">
+                        <button className={`filter-opt ${filters.langdon === null ? 'on' : ''}`} onClick={() => setFilter('langdon', null)}>All</button>
+                        <button className={`filter-opt ${filters.langdon === true ? 'on' : ''}`} onClick={() => setFilter('langdon', true)}>Yes</button>
+                        <button className={`filter-opt ${filters.langdon === false ? 'on' : ''}`} onClick={() => setFilter('langdon', false)}>No</button>
+                      </div>
+                      {hasFilter('langdon') && <button className="filter-clear-btn" onClick={() => { clearFilter('langdon'); setFilterOpen(null); }}>Clear</button>}
+                    </div>
+                  </>)}
+                </div>
               </th>
-              <th className={`center sortable ${sortCol === 'coverage' ? 'active' : ''}`} style={{ width: 170 }} onClick={() => toggleSort('coverage')}>
-                Shuttle coverage {sortArrow('coverage')}
+              {/* ── Shuttle coverage ── */}
+              <th className="sortable center" style={{ width: '15%' }}>
+                <div className="col-header center">
+                  <span className={`col-header-name ${hasFilter('coverage') ? 'has-filter' : ''}`}
+                    onClick={() => setFilterOpen(f => f === 'coverage' ? null : 'coverage')}>
+                    Shuttle coverage {hasFilter('coverage') && <span className="filter-dot" />}
+                  </span>
+                  <button className={`col-sort-btn ${sortCol === 'coverage' ? 'active' : ''}`} onClick={() => toggleSort('coverage')}>
+                    {sortCol === 'coverage' ? (sortDir === 'asc' ? '▲' : '▼') : '▲'}
+                  </button>
+                  {filterOpen === 'coverage' && (<>
+                    <div className="filter-popup-overlay" onClick={() => setFilterOpen(null)} />
+                    <div className="filter-popup">
+                      <div className="filter-popup-options">
+                        <button className={`filter-opt ${filters.coverage === null ? 'on' : ''}`} onClick={() => setFilter('coverage', null)}>All</button>
+                        <button className={`filter-opt ${filters.coverage === 'covered' ? 'on' : ''}`} onClick={() => setFilter('coverage', 'covered')}>Covered</button>
+                        <button className={`filter-opt ${filters.coverage === 'not_covered' ? 'on' : ''}`} onClick={() => setFilter('coverage', 'not_covered')}>Not covered</button>
+                      </div>
+                      {hasFilter('coverage') && <button className="filter-clear-btn" onClick={() => { clearFilter('coverage'); setFilterOpen(null); }}>Clear</button>}
+                    </div>
+                  </>)}
+                </div>
               </th>
-              <th className={`right sortable ${sortCol === 'owes_sessions' ? 'active' : ''}`} style={{ width: 120 }} onClick={() => toggleSort('owes_sessions')}>
-                Owes (sessions) {sortArrow('owes_sessions')}
+              {/* ── Owes (sessions) ── */}
+              <th className="sortable right" style={{ width: '12%' }}>
+                <div className="col-header right">
+                  <span className={`col-header-name ${hasFilter('owes_sessions') ? 'has-filter' : ''}`}
+                    onClick={() => setFilterOpen(f => f === 'owes_sessions' ? null : 'owes_sessions')}>
+                    Owes (sessions) {hasFilter('owes_sessions') && <span className="filter-dot" />}
+                  </span>
+                  <button className={`col-sort-btn ${sortCol === 'owes_sessions' ? 'active' : ''}`} onClick={() => toggleSort('owes_sessions')}>
+                    {sortCol === 'owes_sessions' ? (sortDir === 'asc' ? '▲' : '▼') : '▼'}
+                  </button>
+                  {filterOpen === 'owes_sessions' && (<>
+                    <div className="filter-popup-overlay" onClick={() => setFilterOpen(null)} />
+                    <div className="filter-popup align-right">
+                      <div className="filter-popup-options">
+                        <button className={`filter-opt ${filters.owes_sessions === null ? 'on' : ''}`} onClick={() => setFilter('owes_sessions', null)}>All</button>
+                        <button className={`filter-opt ${filters.owes_sessions === 'has_balance' ? 'on' : ''}`} onClick={() => setFilter('owes_sessions', 'has_balance')}>Has balance</button>
+                        <button className={`filter-opt ${filters.owes_sessions === 'zero' ? 'on' : ''}`} onClick={() => setFilter('owes_sessions', 'zero')}>Zero</button>
+                      </div>
+                      {hasFilter('owes_sessions') && <button className="filter-clear-btn" onClick={() => { clearFilter('owes_sessions'); setFilterOpen(null); }}>Clear</button>}
+                    </div>
+                  </>)}
+                </div>
               </th>
-              <th className={`right sortable ${sortCol === 'owes_shuttles' ? 'active' : ''}`} style={{ width: 130 }} onClick={() => toggleSort('owes_shuttles')}>
-                Owes (shuttles) {sortArrow('owes_shuttles')}
+              {/* ── Owes (shuttles) ── */}
+              <th className="sortable right" style={{ width: '12%' }}>
+                <div className="col-header right">
+                  <span className={`col-header-name ${hasFilter('owes_shuttles') ? 'has-filter' : ''}`}
+                    onClick={() => setFilterOpen(f => f === 'owes_shuttles' ? null : 'owes_shuttles')}>
+                    Owes (shuttles) {hasFilter('owes_shuttles') && <span className="filter-dot" />}
+                  </span>
+                  <button className={`col-sort-btn ${sortCol === 'owes_shuttles' ? 'active' : ''}`} onClick={() => toggleSort('owes_shuttles')}>
+                    {sortCol === 'owes_shuttles' ? (sortDir === 'asc' ? '▲' : '▼') : '▼'}
+                  </button>
+                  {filterOpen === 'owes_shuttles' && (<>
+                    <div className="filter-popup-overlay" onClick={() => setFilterOpen(null)} />
+                    <div className="filter-popup align-right">
+                      <div className="filter-popup-options">
+                        <button className={`filter-opt ${filters.owes_shuttles === null ? 'on' : ''}`} onClick={() => setFilter('owes_shuttles', null)}>All</button>
+                        <button className={`filter-opt ${filters.owes_shuttles === 'has_balance' ? 'on' : ''}`} onClick={() => setFilter('owes_shuttles', 'has_balance')}>Has balance</button>
+                        <button className={`filter-opt ${filters.owes_shuttles === 'zero' ? 'on' : ''}`} onClick={() => setFilter('owes_shuttles', 'zero')}>Zero</button>
+                      </div>
+                      {hasFilter('owes_shuttles') && <button className="filter-clear-btn" onClick={() => { clearFilter('owes_shuttles'); setFilterOpen(null); }}>Clear</button>}
+                    </div>
+                  </>)}
+                </div>
               </th>
-              <th className={`right sortable ${sortCol === 'total' ? 'active' : ''}`} style={{ width: 110 }} onClick={() => toggleSort('total')}>
-                Total owed {sortArrow('total')}
+              {/* ── Total owed ── */}
+              <th className="sortable right" style={{ width: '11%' }}>
+                <div className="col-header right">
+                  <span className={`col-header-name ${hasFilter('total') ? 'has-filter' : ''}`}
+                    onClick={() => setFilterOpen(f => f === 'total' ? null : 'total')}>
+                    Total owed {hasFilter('total') && <span className="filter-dot" />}
+                  </span>
+                  <button className={`col-sort-btn ${sortCol === 'total' ? 'active' : ''}`} onClick={() => toggleSort('total')}>
+                    {sortCol === 'total' ? (sortDir === 'asc' ? '▲' : '▼') : '▼'}
+                  </button>
+                  {filterOpen === 'total' && (<>
+                    <div className="filter-popup-overlay" onClick={() => setFilterOpen(null)} />
+                    <div className="filter-popup align-right">
+                      <div className="filter-popup-options">
+                        <button className={`filter-opt ${filters.total === null ? 'on' : ''}`} onClick={() => setFilter('total', null)}>All</button>
+                        <button className={`filter-opt ${filters.total === 'has_balance' ? 'on' : ''}`} onClick={() => setFilter('total', 'has_balance')}>Has balance</button>
+                        <button className={`filter-opt ${filters.total === 'zero' ? 'on' : ''}`} onClick={() => setFilter('total', 'zero')}>Zero</button>
+                      </div>
+                      {hasFilter('total') && <button className="filter-clear-btn" onClick={() => { clearFilter('total'); setFilterOpen(null); }}>Clear</button>}
+                    </div>
+                  </>)}
+                </div>
               </th>
-              <th style={{ width: 60 }}></th>
+              <th style={{ width: '5%' }}></th>
             </tr>
           </thead>
           <tbody>
@@ -2325,6 +2624,7 @@ function RosterView({ people, shuttlecocks, sessions, newName, setNewName, newNa
             })}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );
