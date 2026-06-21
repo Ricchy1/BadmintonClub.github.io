@@ -1057,7 +1057,7 @@
 
     /* ───── Week summary bar ───── */
     .week-summary {
-      margin-bottom: 18px;
+      margin-top: 18px;
       padding: 14px 18px;
       background: var(--surface);
       border: 1px solid var(--line);
@@ -1663,6 +1663,7 @@ function App() {
   const [tab, setTab] = useState('sessions');
   const [newName, setNewName] = useState('');
   const [hiddenDays, setHiddenDays] = useState([]);
+  const [colFilters, setColFilters] = useState({});
   const newNameRef = useRef(null);
   const loaded = useRef(false);
   /*
@@ -1946,6 +1947,7 @@ function App() {
           onSwitchToRoster={() => setTab('roster')}
           hiddenDays={hiddenDays}
           onToggleDayVisibility={toggleDayVisibility}
+          colFilters={colFilters}
         />
       )}
 
@@ -1964,6 +1966,8 @@ function App() {
           onToggleLangdon={toggleLangdon}
           onSetAllShuttle={setAllShuttle}
           onToggleDay={togglePersonDay}
+          colFilters={colFilters}
+          setColFilters={setColFilters}
         />
       )}
 
@@ -2095,7 +2099,7 @@ function CourtBookingsView({ state, onToggleCourt }) {
 }
 
 /* ───── Sessions view ───── */
-function SessionsView({ weekStart, state, peopleById, shuttlecocks, todayIso, onSetCourt, onToggleAtt, onTogglePay, onMarkAll, onAddPersonToDay, onSwitchToRoster, hiddenDays, onToggleDayVisibility }) {
+function SessionsView({ weekStart, state, peopleById, shuttlecocks, todayIso, onSetCourt, onToggleAtt, onTogglePay, onMarkAll, onAddPersonToDay, onSwitchToRoster, hiddenDays, onToggleDayVisibility, colFilters }) {
   const [statusFilter, setStatusFilter] = React.useState('all'); // 'all' | 'paid' | 'unpaid'
   const [outstandingOnly, setOutstandingOnly] = React.useState(false);
   const visibleDays = DAYS.filter(d => !hiddenDays.includes(d.key));
@@ -2139,29 +2143,6 @@ function SessionsView({ weekStart, state, peopleById, shuttlecocks, todayIso, on
 
   return (
     <>
-      <div className="week-summary">
-        <div className="ws-item">
-          <span className="label">Week total</span>
-          <span className="value mono">{money(weekTotal)}</span>
-        </div>
-        <div className="ws-item">
-          <span className="label">Court hire</span>
-          <span className="value mono">{money(weekCourt)}</span>
-        </div>
-        <div className="ws-item">
-          <span className="label">Player-sessions</span>
-          <span className="value mono">{weekAttendees}</span>
-        </div>
-        {weekSurchargeCount > 0 && (
-          <div className="ws-item">
-            <span className="label" style={{ color: 'var(--warn)' }}>incl. +${SHUTTLE_SURCHARGE} × {weekSurchargeCount}</span>
-            <span className="value mono" style={{ color: 'var(--warn)' }}>+{money(weekSurcharge)}</span>
-          </div>
-        )}
-        <div className="ws-spacer" />
-        <div className="ws-note mono">+{money(SHUTTLE_SURCHARGE)} shuttle surcharge applies on sessions not covered by a shuttlecock card</div>
-      </div>
-
       <div className="day-filters">
         <div className="day-filters-group">
           <span className="day-filters-label">Show</span>
@@ -2200,6 +2181,7 @@ function SessionsView({ weekStart, state, peopleById, shuttlecocks, todayIso, on
             isToday={di.iso === todayIso}
             isPast={di.iso < todayIso}
             outstandingOnly={outstandingOnly}
+            colFilters={colFilters}
             onSetCourt={onSetCourt}
             onToggleAtt={onToggleAtt}
             onTogglePay={onTogglePay}
@@ -2209,12 +2191,33 @@ function SessionsView({ weekStart, state, peopleById, shuttlecocks, todayIso, on
           />
         ))}
       </div>
+
+      <div className="week-summary" style={{ marginTop: 18, marginBottom: 0 }}>
+        <div className="ws-item">
+          <span className="label">Week total</span>
+          <span className="value mono">{money(weekTotal)}</span>
+        </div>
+        <div className="ws-item">
+          <span className="label">Court hire</span>
+          <span className="value mono">{money(weekCourt)}</span>
+        </div>
+        <div className="ws-item">
+          <span className="label">Player-sessions</span>
+          <span className="value mono">{weekAttendees}</span>
+        </div>
+        {weekSurchargeCount > 0 && (
+          <div className="ws-item">
+            <span className="label" style={{ color: 'var(--warn)' }}>incl. +${SHUTTLE_SURCHARGE} × {weekSurchargeCount}</span>
+            <span className="value mono" style={{ color: 'var(--warn)' }}>+{money(weekSurcharge)}</span>
+          </div>
+        )}
+        <div className="ws-spacer" />
+        <div className="ws-note mono">+{money(SHUTTLE_SURCHARGE)} shuttle surcharge applies on sessions not covered by a shuttlecock card</div>
+      </div>
     </>
   );
 }
-
-/* ───── Day card ───── */
-function DayCard({ di, allPeople, peopleById, shuttlecocks, isToday, isPast, outstandingOnly, onSetCourt, onToggleAtt, onTogglePay, onMarkAll, onAddPersonToDay, onSwitchToRoster }) {
+function DayCard({ di, allPeople, peopleById, shuttlecocks, isToday, isPast, outstandingOnly, colFilters, onSetCourt, onToggleAtt, onTogglePay, onMarkAll, onAddPersonToDay, onSwitchToRoster }) {
   const [courtStr, setCourtStr] = useState(String(di.session.courtHire || ''));
   const [showAdd, setShowAdd] = useState(false);
   const [confirmUntick, setConfirmUntick] = useState(null); // { pid, name }
@@ -2240,10 +2243,21 @@ function DayCard({ di, allPeople, peopleById, shuttlecocks, isToday, isPast, out
     onSetCourt(di.iso, parseFloat(v) || 0);
   };
 
-  /* Filter roster: when outstandingOnly is on, show only attended + unpaid */
-  const displayRoster = outstandingOnly
-    ? di.roster.filter(p => !!di.session.attendance[p.id] && !(di.session.payments && di.session.payments[p.id]))
-    : di.roster;
+  /* People filter from People tab — hide filtered-out people but keep calculations */
+  const isPersonVisible = (p) => {
+    if (!colFilters || Object.keys(colFilters).length === 0) return true;
+    if (colFilters.name && !colFilters.name.has(p.name || '')) return false;
+    if (colFilters.days && !(p.days || []).some(d => colFilters.days.has(d))) return false;
+    if (colFilters.langdon && !colFilters.langdon.has(p.langdon ? 'Yes' : 'No')) return false;
+    return true;
+  };
+
+  /* Filter roster: outstanding filter + people tab filter, but keep full roster for calculations */
+  const displayRoster = di.roster.filter(p => {
+    if (!isPersonVisible(p)) return false;
+    if (outstandingOnly && (!(di.session.attendance[p.id]) || (di.session.payments && di.session.payments[p.id]))) return false;
+    return true;
+  });
 
   const allOn = di.roster.length > 0 && di.attendees.length === di.roster.length;
   const fullyPaid = di.attendees.length > 0 && di.paidCount === di.attendees.length;
@@ -2294,8 +2308,43 @@ function DayCard({ di, allPeople, peopleById, shuttlecocks, isToday, isPast, out
         </div>
       </div>
 
+      <div className="day-foot">
+        <span className="label">Attendees</span>
+        <span className="value mono">{di.attendees.length}</span>
+        <span className="label">Base split</span>
+        <span className="value mono">{di.attendees.length > 0 && di.session.courtHire > 0 ? money(di.baseSplit) : '—'}</span>
+        <span className="label">Paid</span>
+        <span className="value mono">{di.paidCount} / {di.attendees.length} · {money(di.paidAmount)}</span>
+        <span className="label">Day total</span>
+        <span className="value big mono">{money(di.total)}</span>
+        {di.surchargeCount > 0 && (
+          <>
+            <span className="label" style={{ color: 'var(--warn)' }}>incl. +${SHUTTLE_SURCHARGE} × {di.surchargeCount}</span>
+            <span className="value mono" style={{ color: 'var(--warn)' }}>+{money(di.surchargeTotal)}</span>
+          </>
+        )}
+      </div>
+
       {di.roster.length > 0 && (
-        <div className="court-row" style={{ display: 'none' }}/>
+        <div className="day-actions">
+          <button className="day-action" onClick={handleToggleAll}>
+            {allOn ? 'Clear attendance' : 'Mark all attended'}
+          </button>
+          {eligibleToAdd.length > 0 && (
+            <div style={{ position: 'relative' }}>
+              <button className="day-action" onClick={() => setShowAdd(v => !v)}>
+                + Add player
+              </button>
+              {showAdd && (
+                <QuickAddDropdown
+                  people={eligibleToAdd}
+                  onPick={(id) => { onAddPersonToDay(id, di.key); setShowAdd(false); }}
+                  onClose={() => setShowAdd(false)}
+                />
+              )}
+            </div>
+          )}
+        </div>
       )}
 
       <ul className="roster-list">
@@ -2359,45 +2408,6 @@ function DayCard({ di, allPeople, peopleById, shuttlecocks, isToday, isPast, out
           );
         })}
       </ul>
-
-      {di.roster.length > 0 && (
-        <div className="day-actions" style={{ borderTop: '1px solid var(--line)', borderBottom: 0 }}>
-          <button className="day-action" onClick={handleToggleAll}>
-            {allOn ? 'Clear attendance' : 'Mark all attended'}
-          </button>
-          {eligibleToAdd.length > 0 && (
-            <div style={{ position: 'relative' }}>
-              <button className="day-action" onClick={() => setShowAdd(v => !v)}>
-                + Add player
-              </button>
-              {showAdd && (
-                <QuickAddDropdown
-                  people={eligibleToAdd}
-                  onPick={(id) => { onAddPersonToDay(id, di.key); setShowAdd(false); }}
-                  onClose={() => setShowAdd(false)}
-                />
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      <div className="day-foot">
-        <span className="label">Attendees</span>
-        <span className="value mono">{di.attendees.length}</span>
-        <span className="label">Base split</span>
-        <span className="value mono">{di.attendees.length > 0 && di.session.courtHire > 0 ? money(di.baseSplit) : '—'}</span>
-        <span className="label">Paid</span>
-        <span className="value mono">{di.paidCount} / {di.attendees.length} · {money(di.paidAmount)}</span>
-        <span className="label">Day total</span>
-        <span className="value big mono">{money(di.total)}</span>
-        {di.surchargeCount > 0 && (
-          <>
-            <span className="label" style={{ color: 'var(--warn)' }}>incl. +${SHUTTLE_SURCHARGE} × {di.surchargeCount}</span>
-            <span className="value mono" style={{ color: 'var(--warn)' }}>+{money(di.surchargeTotal)}</span>
-          </>
-        )}
-      </div>
 
       {confirmUntick && (
         <React.Fragment>
@@ -2535,7 +2545,7 @@ function FilterCheckboxPopup({ items, selected, searchable, alignRight, onToggle
 }
 
 /* ───── Roster (people management) view ───── */
-function RosterView({ people, shuttlecocks, sessions, newName, setNewName, newNameRef, onAdd, onRemove, onRename, onToggleShuttle, onToggleLangdon, onSetAllShuttle, onToggleDay }) {
+function RosterView({ people, shuttlecocks, sessions, newName, setNewName, newNameRef, onAdd, onRemove, onRename, onToggleShuttle, onToggleLangdon, onSetAllShuttle, onToggleDay, colFilters, setColFilters }) {
   const allPaid = people.length > 0 && people.every(p => p.shuttlePaid);
   // Derive each person's current shuttle coverage based on today + shuttlecocks.
   // Used for display only — actual surcharge decisions happen per-session.
@@ -2608,7 +2618,6 @@ function RosterView({ people, shuttlecocks, sessions, newName, setNewName, newNa
   };
 
   /* ── Column filters (Excel-style checkbox lists) ── */
-  const [colFilters, setColFilters] = React.useState({});   // col → Set of included values, or absent = all
   const [filterOpen, setFilterOpen] = React.useState(null);
 
   const getPersonColValue = React.useCallback((p, col) => {
