@@ -1896,7 +1896,13 @@ function SessionsView({ weekStart, state, peopleById, shuttlecocks, todayIso, on
     const date = dateForDayOfWeek(weekStart, d.dow);
     const iso = isoDate(date);
     const session = state.sessions[iso] || { courtHire: 0, attendance: {} };
-    const roster = state.people.filter(p => p.days.includes(d.key));
+    const isPastOrToday = iso <= todayIso;
+    const roster = state.people.filter(p => {
+      if (p.days.includes(d.key)) return true;
+      // Keep people on past days if they already have attendance recorded
+      if (isPastOrToday && session.attendance[p.id]) return true;
+      return false;
+    });
     const attendees = roster.filter(p => session.attendance[p.id]);
     const baseSplit = attendees.length > 0 && session.courtHire > 0
       ? session.courtHire / attendees.length : 0;
