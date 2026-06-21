@@ -1251,12 +1251,11 @@ const pad = (n) => String(n).padStart(2, '0');
 const isoDate = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const todayISO = () => isoDate(new Date());
 function startOfWeek(d) {
-  // Monday-start week
+  // Sunday-start week
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
   const day = x.getDay(); // 0=Sun
-  const diff = (day === 0 ? -6 : 1 - day);
-  x.setDate(x.getDate() + diff);
+  x.setDate(x.getDate() - day);
   return x;
 }
 function addDays(d, n) {
@@ -1265,9 +1264,8 @@ function addDays(d, n) {
   return x;
 }
 function dateForDayOfWeek(weekStart, dow) {
-  // weekStart = Monday; dow as JS getDay()
-  const offset = dow === 0 ? 6 : dow - 1;
-  return addDays(weekStart, offset);
+  // weekStart = Sunday; dow as JS getDay() (0=Sun, 1=Mon, ... 6=Sat)
+  return addDays(weekStart, dow);
 }
 function fmtMonthDay(d) {
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
