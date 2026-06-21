@@ -693,18 +693,16 @@
       position: fixed; inset: 0; z-index: 99;
     }
     .filter-popup {
-      position: absolute;
-      top: calc(100% + 4px);
-      left: 0;
+      position: fixed;
       z-index: 100;
-      min-width: 180px;
+      min-width: 200px;
       background: var(--surface);
       border: 1px solid var(--line);
       border-radius: 10px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.12);
       padding: 8px;
+      max-width: calc(100vw - 16px);
     }
-    .filter-popup.align-right { left: auto; right: 0; }
     .filter-popup-search {
       width: 100%;
       border: 1px solid var(--line-2);
@@ -2272,13 +2270,32 @@ function OwedPopover({ title, children, onClose, onMouseEnter, onMouseLeave }) {
 function FilterCheckboxPopup({ items, selected, searchable, alignRight, onToggle, onClear, onClose }) {
   const [search, setSearch] = React.useState('');
   const [addToCurrent, setAddToCurrent] = React.useState(!!selected);
+  const popupRef = React.useRef(null);
+
+  /* Position the popup fixed relative to its parent (.col-header) so it
+     escapes the table-scroll overflow container */
+  React.useLayoutEffect(() => {
+    const el = popupRef.current;
+    if (!el || !el.parentElement) return;
+    const rect = el.parentElement.getBoundingClientRect();
+    el.style.position = 'fixed';
+    el.style.top = (rect.bottom + 4) + 'px';
+    if (alignRight) {
+      el.style.left = 'auto';
+      el.style.right = Math.max(8, window.innerWidth - rect.right) + 'px';
+    } else {
+      el.style.left = Math.max(8, rect.left) + 'px';
+      el.style.right = 'auto';
+    }
+  }, [alignRight]);
+
   const displayed = searchable && search
     ? items.filter(it => it.label.toLowerCase().includes(search.toLowerCase()))
     : items;
   return (
     <React.Fragment>
       <div className="filter-popup-overlay" onClick={onClose} />
-      <div className={`filter-popup ${alignRight ? 'align-right' : ''}`}>
+      <div ref={popupRef} className="filter-popup">
         {searchable && (
           <input className="filter-popup-search" placeholder="Search…" autoFocus
             value={search} onChange={e => setSearch(e.target.value)} />
