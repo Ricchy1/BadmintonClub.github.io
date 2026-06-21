@@ -1500,6 +1500,7 @@ function App() {
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
   const [tab, setTab] = useState('sessions');
   const [newName, setNewName] = useState('');
+  const [hiddenDays, setHiddenDays] = useState([]);
   const newNameRef = useRef(null);
   const loaded = useRef(false);
   /*
@@ -1684,11 +1685,7 @@ function App() {
     togglePersonDay(personId, dayKey);
   }
   function toggleDayVisibility(dayKey) {
-    setState(s => {
-      const hidden = s.hiddenDays || [];
-      const has = hidden.includes(dayKey);
-      return { ...s, hiddenDays: has ? hidden.filter(d => d !== dayKey) : [...hidden, dayKey] };
-    });
+    setHiddenDays(prev => prev.includes(dayKey) ? prev.filter(d => d !== dayKey) : [...prev, dayKey]);
   }
 
   /* week navigation */
@@ -1765,7 +1762,7 @@ function App() {
           onMarkAll={markAllAttended}
           onAddPersonToDay={addPersonToDay}
           onSwitchToRoster={() => setTab('roster')}
-          hiddenDays={state.hiddenDays || []}
+          hiddenDays={hiddenDays}
           onToggleDayVisibility={toggleDayVisibility}
         />
       )}
