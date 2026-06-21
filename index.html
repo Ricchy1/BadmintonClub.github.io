@@ -1445,89 +1445,101 @@
 
     /* ───── Mobile: bigger fonts ───── */
     @media (max-width: 1024px) {
-      body { font-size: 17px; }
-      .app { padding: 16px 12px 80px; }
-      .brand-title { font-size: 20px; }
-      .brand-sub { font-size: 13px; }
-      .topbar { gap: 12px; }
-      .week-label { font-size: 14px; min-width: 0; padding: 0 8px; }
-      .week-nav { padding: 3px; }
-      .week-nav button { width: 34px; height: 34px; }
-      .today-pill { font-size: 13px; padding: 7px 12px; }
-      .tab { font-size: 15px; padding: 10px 16px; }
-      .tab .count { font-size: 13px; }
-      .day-name { font-size: 22px; }
-      .day-date { font-size: 15px; }
-      .day-tag { font-size: 12px; padding: 4px 10px; }
-      .court-row { padding: 12px 14px; }
-      .court-row label { font-size: 16px; }
-      .court-input { font-size: 20px; width: 110px; padding: 8px 10px 8px 24px; }
-      .court-input-wrap .prefix { font-size: 18px; }
-
-      /* Roster items — tighter grid, bigger text */
-      .roster-item {
-        grid-template-columns: 30px 1fr auto 30px;
+      body { font-size: 15px; }
+      .app { padding: 12px 10px 60px; }
+      .topbar {
+        flex-wrap: wrap;
         gap: 8px;
-        padding: 12px 14px;
       }
-      .check, .check-paid { width: 30px; height: 30px; border-radius: 9px; }
-      .check svg, .check-paid svg { width: 18px; height: 18px; }
-      .person-name { font-size: 18px; }
-      .person-cost { font-size: 20px; font-weight: 700; min-width: auto; }
-      .person-cost.dim { font-size: 20px; }
-      .person-cost .surcharge { font-size: 13px; }
-      .shuttle-flag { font-size: 11px; padding: 2px 6px; }
-      .pay-check { width: 30px; height: 30px; font-size: 14px; }
-      .pay-check.on svg { width: 15px; height: 15px; }
+      .brand { min-width: 0; }
+      .brand-title { font-size: 18px; }
+      .brand-sub { font-size: 11px; }
+      .brand-mark { width: 30px; height: 30px; font-size: 15px; border-radius: 8px; }
+      .week-controls { gap: 6px; }
+      .week-label { font-size: 12px; min-width: 0; padding: 0 6px; }
+      .week-nav { padding: 3px; }
+      .week-nav button { width: 30px; height: 30px; font-size: 12px; }
+      .today-pill { font-size: 11px; padding: 5px 10px; }
+      .tab { font-size: 13px; padding: 8px 12px; white-space: nowrap; }
+      .tab .count { font-size: 11px; }
+      .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; gap: 0; }
+      .day-name { font-size: 20px; }
+      .day-date { font-size: 13px; }
+      .day-tag { font-size: 11px; padding: 3px 8px; }
+      .court-row { padding: 10px 12px; }
+      .court-row label { font-size: 14px; }
+      .court-input { font-size: 18px; width: 100px; padding: 6px 8px 6px 22px; }
+      .court-input-wrap .prefix { font-size: 16px; }
 
-      /* Day footer */
-      .day-foot { padding: 12px 14px 14px; }
-      .day-foot .label { font-size: 14px; }
-      .day-foot .value { font-size: 18px; }
-      .day-foot .value.big { font-size: 24px; }
-      .day-action { font-size: 14px; padding: 8px 12px; }
-      .day-actions { padding: 8px 14px 12px; }
-      .day-head { padding: 14px 14px 12px; }
+      .roster-item {
+        grid-template-columns: 28px 1fr auto 28px;
+        gap: 6px;
+        padding: 10px 12px;
+      }
+      .check, .check-paid { width: 28px; height: 28px; border-radius: 8px; }
+      .check svg, .check-paid svg { width: 16px; height: 16px; }
+      .person-name { font-size: 15px; }
+      .person-cost { font-size: 16px; font-weight: 700; min-width: auto; }
+      .person-cost.dim { font-size: 16px; }
+      .person-cost .surcharge { font-size: 11px; }
+      .shuttle-flag { font-size: 10px; padding: 2px 5px; }
+      .pay-check { width: 28px; height: 28px; font-size: 12px; }
+      .pay-check.on svg { width: 14px; height: 14px; }
 
-      .roster-empty { font-size: 15px; }
+      .day-foot { padding: 10px 12px 12px; }
+      .day-foot .label { font-size: 12px; }
+      .day-foot .value { font-size: 15px; }
+      .day-foot .value.big { font-size: 20px; }
+      .day-action { font-size: 12px; padding: 6px 10px; }
+      .day-actions { padding: 6px 12px 10px; }
+      .day-head { padding: 12px 12px 10px; }
+      .roster-empty { font-size: 13px; }
 
-      /* Week summary */
-      .ws-item .label { font-size: 13px; }
-      .ws-item .value { font-size: 22px; }
-      .ws-note { font-size: 12px; }
-      .week-summary { padding: 14px; gap: 20px; }
+      .ws-item .label { font-size: 11px; }
+      .ws-item .value { font-size: 18px; }
+      .ws-note { font-size: 11px; }
+      .week-summary { padding: 12px; gap: 16px; }
 
-      /* Day filters */
-      .day-filter-btn, .day-filter-chip { font-size: 14px; padding: 8px 14px; }
-      .day-filters-label { font-size: 13px; }
-      .status-chip { font-size: 13px; padding: 6px 12px; }
+      .day-filter-btn, .day-filter-chip { font-size: 13px; padding: 6px 12px; }
+      .day-filters-label { font-size: 11px; }
+      .status-chip { font-size: 12px; padding: 5px 10px; }
 
-      /* People tab */
-      .roster-panel-head { padding: 14px 14px; }
-      .roster-panel-head h2 { font-size: 20px; }
-      .roster-panel-head p { font-size: 14px; }
-      .add-person { padding: 12px 14px; }
-      .add-person input { font-size: 16px; padding: 10px 14px; }
-      .add-person button { font-size: 15px; padding: 10px 18px; }
-      .people-table thead th { font-size: 11px; padding: 12px 8px; }
-      .people-table tbody td { padding: 12px 8px; }
-      .col-header-name { font-size: 10px; padding: 2px 3px; }
-      .col-sort-btn { width: 18px; height: 18px; font-size: 8px; }
-      .name-cell, .name-cell input { font-size: 16px; }
-      .day-chip { font-size: 13px; width: 42px; height: 32px; }
-      .coverage-badge { font-size: 12px; padding: 5px 10px; }
-      .owed-cell { font-size: 17px; }
-      .payment-badge { font-size: 13px; }
+      .roster-panel-head { padding: 12px; }
+      .roster-panel-head h2 { font-size: 18px; }
+      .roster-panel-head p { font-size: 12px; }
+      .add-person { padding: 10px 12px; }
+      .add-person input { font-size: 14px; padding: 8px 12px; }
+      .add-person button { font-size: 13px; padding: 8px 14px; }
+      .people-table thead th { font-size: 10px; padding: 10px 6px; }
+      .people-table tbody td { padding: 10px 6px; }
+      .col-header-name { font-size: 9px; padding: 2px 2px; }
+      .col-sort-btn { width: 16px; height: 16px; font-size: 7px; }
+      .name-cell, .name-cell input { font-size: 14px; }
+      .day-chip { font-size: 11px; width: 36px; height: 28px; }
+      .coverage-badge { font-size: 11px; padding: 4px 8px; }
+      .owed-cell { font-size: 14px; }
+      .payment-badge { font-size: 11px; }
 
-      /* History mobile */
-      .history-panel-head { padding: 14px 14px; }
-      .history-panel-head h2 { font-size: 20px; }
-      .history-panel-head p { font-size: 14px; }
-      .history-table thead th { font-size: 12px; padding: 10px 10px; }
-      .history-table tbody td { padding: 10px 10px; font-size: 16px; }
-      .history-summary { padding: 14px; gap: 20px; }
-      .history-summary .hs-value { font-size: 18px; }
-      .history-summary .hs-label { font-size: 12px; }
+      .history-panel-head { padding: 12px; }
+      .history-panel-head h2 { font-size: 18px; }
+      .history-panel-head p { font-size: 12px; }
+      .history-table thead th { font-size: 11px; padding: 8px 8px; }
+      .history-table tbody td { padding: 8px 8px; font-size: 14px; }
+      .history-summary { padding: 12px; gap: 16px; }
+      .history-summary .hs-value { font-size: 16px; }
+      .history-summary .hs-label { font-size: 10px; }
+
+      .court-bookings-card { padding: 14px; }
+      .court-bookings-subtitle { font-size: 14px; }
+      .court-bookings-date { font-size: 12px; }
+      .court-booked-chip { font-size: 12px; padding: 4px 10px; }
+      .court-cell { font-size: 16px; border-width: 2px; }
+      .court-layout { padding: 14px; }
+      .court-layout-title { font-size: 11px; }
+      .court-row-label { font-size: 10px; }
+
+      .outstanding-toggle { font-size: 11px; padding: 5px 12px; }
+    }
     }
   </style>
 </head>
@@ -2151,6 +2163,7 @@ function SessionsView({ weekStart, state, peopleById, shuttlecocks, todayIso, on
     return map[next];
   };
   const [mobileDay, setMobileDay] = React.useState(getDefaultDay);
+  const [outstandingOnly, setOutstandingOnly] = React.useState(false);
 
   /* Compute dayInfos for ALL days (not filtered yet) */
   const allDayInfos = DAYS.map(d => {
@@ -2220,6 +2233,13 @@ function SessionsView({ weekStart, state, peopleById, shuttlecocks, todayIso, on
         </div>
       </div>
 
+      <div style={{ marginBottom: 10 }}>
+        <button className={`outstanding-toggle ${outstandingOnly ? 'on' : ''}`}
+          onClick={() => setOutstandingOnly(v => !v)}>
+          {outstandingOnly ? '✓ ' : ''}Outstanding only
+        </button>
+      </div>
+
       <div className={`sessions cols-${Math.max(1, visibleDayInfos.length)}`}>
         {visibleDayInfos.map(di => (
           <DayCard
@@ -2231,6 +2251,7 @@ function SessionsView({ weekStart, state, peopleById, shuttlecocks, todayIso, on
             isToday={di.iso === todayIso}
             isPast={di.iso < todayIso}
             colFilters={colFilters}
+            outstandingOnly={outstandingOnly}
             onSetCourt={onSetCourt}
             onToggleAtt={onToggleAtt}
             onTogglePay={onTogglePay}
@@ -2266,7 +2287,7 @@ function SessionsView({ weekStart, state, peopleById, shuttlecocks, todayIso, on
     </>
   );
 }
-function DayCard({ di, allPeople, peopleById, shuttlecocks, isToday, isPast, colFilters, onSetCourt, onToggleAtt, onTogglePay, onMarkAll, onAddPersonToDay, onSwitchToRoster }) {
+function DayCard({ di, allPeople, peopleById, shuttlecocks, isToday, isPast, colFilters, outstandingOnly, onSetCourt, onToggleAtt, onTogglePay, onMarkAll, onAddPersonToDay, onSwitchToRoster }) {
   const [courtStr, setCourtStr] = useState(String(di.session.courtHire || ''));
   const [showAdd, setShowAdd] = useState(false);
   const [confirmUntick, setConfirmUntick] = useState(null); // { pid, name }
@@ -2301,7 +2322,11 @@ function DayCard({ di, allPeople, peopleById, shuttlecocks, isToday, isPast, col
     return true;
   };
 
-  const displayRoster = di.roster.filter(p => isPersonVisible(p));
+  const displayRoster = di.roster.filter(p => {
+    if (!isPersonVisible(p)) return false;
+    if (outstandingOnly && (!(di.session.attendance[p.id]) || (di.session.payments && di.session.payments[p.id]))) return false;
+    return true;
+  });
 
   const allOn = di.roster.length > 0 && di.attendees.length === di.roster.length;
   const fullyPaid = di.attendees.length > 0 && di.paidCount === di.attendees.length;
