@@ -752,6 +752,27 @@
       border-radius: 4px;
     }
     .filter-clear-btn:hover { background: var(--bg-2); color: var(--danger); }
+    .filter-popup-footer {
+      border-top: 1px solid var(--line);
+      margin-top: 4px;
+      padding-top: 4px;
+    }
+    .filter-add-toggle {
+      font-size: 12px !important;
+      color: var(--ink-3);
+      font-style: italic;
+    }
+    .filter-add-toggle input[type="checkbox"] {
+      width: 13px !important; height: 13px !important;
+    }
+    .filter-popup-item.add-to-current {
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 4px;
+      padding-bottom: 7px;
+      font-size: 12px;
+      font-style: italic;
+      color: var(--ink-2);
+    }
 
     /* ── Outstanding toggle (sessions) ── */
     .outstanding-toggle {
@@ -2166,8 +2187,9 @@ function OwedPopover({ title, children, onClose, onMouseEnter, onMouseLeave }) {
 }
 
 /* ───── Filter checkbox popup (Excel-style) ───── */
-function FilterCheckboxPopup({ items, selected, allChecked, searchable, alignRight, onToggle, onSelectAll, onClearAll, onClose }) {
+function FilterCheckboxPopup({ items, selected, searchable, alignRight, onToggle, onClear, onClose }) {
   const [search, setSearch] = React.useState('');
+  const [addToCurrent, setAddToCurrent] = React.useState(!!selected);
   const displayed = searchable && search
     ? items.filter(it => it.label.toLowerCase().includes(search.toLowerCase()))
     : items;
@@ -2179,15 +2201,17 @@ function FilterCheckboxPopup({ items, selected, allChecked, searchable, alignRig
           <input className="filter-popup-search" placeholder="Search…" autoFocus
             value={search} onChange={e => setSearch(e.target.value)} />
         )}
+        <label className="filter-popup-item add-to-current"
+          onClick={e => { e.preventDefault(); setAddToCurrent(v => !v); }}>
+          <input type="checkbox" checked={addToCurrent} readOnly />
+          <span className="filter-item-label">Add to current filtered items</span>
+        </label>
         <div className="filter-popup-list">
-          <label className="filter-popup-item" onClick={e => { e.preventDefault(); allChecked ? onClearAll() : onSelectAll(); }}>
-            <input type="checkbox" checked={allChecked} readOnly />
-            <span className="filter-item-label" style={{ fontWeight: 700 }}>(Select all)</span>
-          </label>
           {displayed.map(it => {
-            const checked = !selected || selected.has(it.value);
+            const checked = !!selected && selected.has(it.value);
             return (
-              <label key={it.value} className="filter-popup-item" onClick={e => { e.preventDefault(); onToggle(it.value); }}>
+              <label key={it.value} className="filter-popup-item"
+                onClick={e => { e.preventDefault(); onToggle(it.value, addToCurrent); }}>
                 <input type="checkbox" checked={checked} readOnly />
                 <span className="filter-item-label">{it.label}</span>
               </label>
@@ -2195,7 +2219,7 @@ function FilterCheckboxPopup({ items, selected, allChecked, searchable, alignRig
           })}
         </div>
         {selected && (
-          <button className="filter-clear-btn" onClick={() => { onSelectAll(); onClose(); }}>Clear filter</button>
+          <button className="filter-clear-btn" onClick={() => { onClear(); onClose(); }}>Clear filter</button>
         )}
       </div>
     </React.Fragment>
@@ -2299,25 +2323,30 @@ function RosterView({ people, shuttlecocks, sessions, newName, setNewName, newNa
     return [...seen.keys()].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).map(v => ({ value: v, label: v }));
   }, [people, getPersonColValue]);
 
-  const toggleFilterValue = (col, val) => {
+  const toggleFilterValue = (col, val, addToCurrent) => {
     setColFilters(prev => {
-      const allVals = getColItems(col).map(it => it.value);
       const cur = prev[col];
-      if (!cur) {
-        const s = new Set(allVals); s.delete(val);
-        return s.size > 0 ? { ...prev, [col]: s } : prev;
+      if (!addToCurrent) {
+        /* Single-select: replace filter with just this value, or clear if already the only one */
+        if (cur && cur.has(val) && cur.size === 1) {
+          const next = { ...prev }; delete next[col]; return next;
+        }
+        return { ...prev, [col]: new Set([val]) };
+      } else {
+        /* Multi-select: add/remove from current filter */
+        if (!cur) return { ...prev, [col]: new Set([val]) };
+        const s = new Set(cur);
+        if (s.has(val)) {
+          s.delete(val);
+          if (s.size === 0) { const next = { ...prev }; delete next[col]; return next; }
+        } else {
+          s.add(val);
+        }
+        return { ...prev, [col]: s };
       }
-      const s = new Set(cur);
-      if (s.has(val)) { if (s.size <= 1) return prev; s.delete(val); }
-      else { s.add(val); if (s.size >= allVals.length) { const next = { ...prev }; delete next[col]; return next; } }
-      return { ...prev, [col]: s };
     });
   };
-  const selectAllInFilter = (col) => setColFilters(prev => { const next = { ...prev }; delete next[col]; return next; });
-  const clearAllInFilter = (col) => {
-    const allVals = getColItems(col).map(it => it.value);
-    if (allVals.length > 0) setColFilters(prev => ({ ...prev, [col]: new Set([allVals[0]]) }));
-  };
+  const clearColFilter = (col) => setColFilters(prev => { const next = { ...prev }; delete next[col]; return next; });
   const isColFiltered = (col) => !!colFilters[col];
   const anyFilterActive = Object.keys(colFilters).length > 0;
   const clearAllFilters = () => setColFilters({});
@@ -2423,7 +2452,6 @@ function RosterView({ people, shuttlecocks, sessions, newName, setNewName, newNa
                 const items = getColItems(h.col);
                 const filtered = isColFiltered(h.col);
                 const curFilter = colFilters[h.col];
-                const allChecked = !curFilter;
                 return (
                   <th key={h.col} className="sortable" style={{ width: h.width }}>
                     <div className={`col-header ${h.align || ''}`}>
@@ -2438,13 +2466,11 @@ function RosterView({ people, shuttlecocks, sessions, newName, setNewName, newNa
                       {filterOpen === h.col && (
                         <FilterCheckboxPopup
                           items={items}
-                          selected={curFilter}
-                          allChecked={allChecked}
+                          selected={curFilter || null}
                           searchable={h.searchable}
                           alignRight={h.alignPopup === 'right'}
-                          onToggle={(val) => toggleFilterValue(h.col, val)}
-                          onSelectAll={() => selectAllInFilter(h.col)}
-                          onClearAll={() => clearAllInFilter(h.col)}
+                          onToggle={(val, addToCurrent) => toggleFilterValue(h.col, val, addToCurrent)}
+                          onClear={() => clearColFilter(h.col)}
                           onClose={() => setFilterOpen(null)}
                         />
                       )}
