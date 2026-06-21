@@ -883,6 +883,38 @@
     }
     .court-cell:active { transform: scale(0.95); }
 
+    /* ── Day tabs (mobile) ── */
+    .day-tabs-mobile {
+      display: flex;
+      margin-bottom: 14px;
+      border-bottom: 2px solid var(--line);
+    }
+    .day-tab {
+      flex: 1;
+      padding: 12px 8px;
+      text-align: center;
+      border: none;
+      background: transparent;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--ink-3);
+      cursor: pointer;
+      border-bottom: 2.5px solid transparent;
+      margin-bottom: -2px;
+      transition: color 0.12s, border-color 0.12s;
+    }
+    .day-tab:hover { color: var(--ink); }
+    .day-tab.active {
+      color: var(--ink);
+      border-bottom-color: var(--accent-ink);
+    }
+    @media (max-width: 767px) {
+      .day-filters-desktop { display: none; }
+    }
+    @media (min-width: 768px) {
+      .day-tabs-mobile { display: none; }
+    }
+
     /* ── Outstanding toggle (sessions) ── */
     .outstanding-toggle {
       padding: 6px 14px;
@@ -2100,17 +2132,34 @@ function CourtBookingsView({ state, onToggleCourt }) {
 
 /* ───── Sessions view ───── */
 function SessionsView({ weekStart, state, peopleById, shuttlecocks, todayIso, onSetCourt, onToggleAtt, onTogglePay, onMarkAll, onAddPersonToDay, onSwitchToRoster, hiddenDays, onToggleDayVisibility, colFilters }) {
-  const [statusFilter, setStatusFilter] = React.useState('all'); // 'all' | 'paid' | 'unpaid'
-  const [outstandingOnly, setOutstandingOnly] = React.useState(false);
-  const visibleDays = DAYS.filter(d => !hiddenDays.includes(d.key));
-  const dayInfos = visibleDays.map(d => {
+  /* Mobile detection */
+  const [isMobile, setIsMobile] = React.useState(typeof window !== 'undefined' && window.innerWidth < 768);
+  React.useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    const handler = (e) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  /* Mobile: single-select day tab. Default to today's session day or the next one */
+  const getDefaultDay = () => {
+    const dow = new Date().getDay();
+    const map = { 2: 'tue', 3: 'wed', 6: 'sat' };
+    if (map[dow]) return map[dow];
+    const dows = [2, 3, 6];
+    const next = dows.find(d => d > dow) || dows[0];
+    return map[next];
+  };
+  const [mobileDay, setMobileDay] = React.useState(getDefaultDay);
+
+  /* Compute dayInfos for ALL days (not filtered yet) */
+  const allDayInfos = DAYS.map(d => {
     const date = dateForDayOfWeek(weekStart, d.dow);
     const iso = isoDate(date);
     const session = state.sessions[iso] || { courtHire: 0, attendance: {} };
     const isPastOrToday = iso <= todayIso;
     const roster = state.people.filter(p => {
       if (p.days.includes(d.key)) return true;
-      // Keep people on past days if they already have attendance recorded
       if (isPastOrToday && session.attendance[p.id]) return true;
       return false;
     });
@@ -2127,23 +2176,32 @@ function SessionsView({ weekStart, state, peopleById, shuttlecocks, todayIso, on
     return { ...d, date, iso, session, roster, attendees, baseSplit, total, paidCount, paidAmount, surchargeCount, surchargeTotal };
   });
 
-  const filteredDayInfos = dayInfos.filter(di => {
-    if (statusFilter === 'all') return true;
-    const isFullyPaid = di.attendees.length > 0 && di.paidCount === di.attendees.length;
-    if (statusFilter === 'paid') return isFullyPaid;
-    if (statusFilter === 'unpaid') return di.attendees.length > 0 && !isFullyPaid;
-    return true;
-  });
+  /* Filter visible days: mobile = single tab, desktop = toggle chips */
+  const visibleDayInfos = isMobile
+    ? allDayInfos.filter(di => di.key === mobileDay)
+    : allDayInfos.filter(di => !hiddenDays.includes(di.key));
 
-  const weekTotal = dayInfos.reduce((s, di) => s + di.total, 0);
-  const weekCourt = dayInfos.reduce((s, di) => s + (di.attendees.length > 0 ? Number(di.session.courtHire) || 0 : 0), 0);
-  const weekAttendees = dayInfos.reduce((s, di) => s + di.attendees.length, 0);
-  const weekSurcharge = dayInfos.reduce((s, di) => s + (di.surchargeTotal || 0), 0);
-  const weekSurchargeCount = dayInfos.reduce((s, di) => s + (di.surchargeCount || 0), 0);
+  const weekTotal = allDayInfos.reduce((s, di) => s + di.total, 0);
+  const weekCourt = allDayInfos.reduce((s, di) => s + (di.attendees.length > 0 ? Number(di.session.courtHire) || 0 : 0), 0);
+  const weekAttendees = allDayInfos.reduce((s, di) => s + di.attendees.length, 0);
+  const weekSurcharge = allDayInfos.reduce((s, di) => s + (di.surchargeTotal || 0), 0);
+  const weekSurchargeCount = allDayInfos.reduce((s, di) => s + (di.surchargeCount || 0), 0);
 
   return (
     <>
-      <div className="day-filters">
+      {/* Mobile: tab-style day navigation */}
+      <div className="day-tabs-mobile">
+        {DAYS.map(d => (
+          <button key={d.key}
+            className={`day-tab ${mobileDay === d.key ? 'active' : ''}`}
+            onClick={() => setMobileDay(d.key)}>
+            {d.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Desktop: toggle chips */}
+      <div className="day-filters day-filters-desktop">
         <div className="day-filters-group">
           <span className="day-filters-label">Show</span>
           {DAYS.map(d => {
@@ -2160,18 +2218,10 @@ function SessionsView({ weekStart, state, peopleById, shuttlecocks, todayIso, on
             );
           })}
         </div>
-        <StatusFilter value={statusFilter} onChange={setStatusFilter} />
-        <button className={`outstanding-toggle ${outstandingOnly ? 'on' : ''}`}
-          onClick={() => setOutstandingOnly(v => !v)}>
-          {outstandingOnly ? '✓ ' : ''}Outstanding only
-        </button>
       </div>
-      <div className={`sessions cols-${Math.max(1, filteredDayInfos.length)}`}>
-        {filteredDayInfos.length === 0 ? (
-          <div className="filter-empty">
-            {statusFilter === 'paid' ? 'No fully-paid sessions this week.' : 'No outstanding sessions this week.'}
-          </div>
-        ) : filteredDayInfos.map(di => (
+
+      <div className={`sessions cols-${Math.max(1, visibleDayInfos.length)}`}>
+        {visibleDayInfos.map(di => (
           <DayCard
             key={di.iso}
             di={di}
@@ -2180,7 +2230,6 @@ function SessionsView({ weekStart, state, peopleById, shuttlecocks, todayIso, on
             shuttlecocks={shuttlecocks}
             isToday={di.iso === todayIso}
             isPast={di.iso < todayIso}
-            outstandingOnly={outstandingOnly}
             colFilters={colFilters}
             onSetCourt={onSetCourt}
             onToggleAtt={onToggleAtt}
@@ -2217,7 +2266,7 @@ function SessionsView({ weekStart, state, peopleById, shuttlecocks, todayIso, on
     </>
   );
 }
-function DayCard({ di, allPeople, peopleById, shuttlecocks, isToday, isPast, outstandingOnly, colFilters, onSetCourt, onToggleAtt, onTogglePay, onMarkAll, onAddPersonToDay, onSwitchToRoster }) {
+function DayCard({ di, allPeople, peopleById, shuttlecocks, isToday, isPast, colFilters, onSetCourt, onToggleAtt, onTogglePay, onMarkAll, onAddPersonToDay, onSwitchToRoster }) {
   const [courtStr, setCourtStr] = useState(String(di.session.courtHire || ''));
   const [showAdd, setShowAdd] = useState(false);
   const [confirmUntick, setConfirmUntick] = useState(null); // { pid, name }
@@ -2252,12 +2301,7 @@ function DayCard({ di, allPeople, peopleById, shuttlecocks, isToday, isPast, out
     return true;
   };
 
-  /* Filter roster: outstanding filter + people tab filter, but keep full roster for calculations */
-  const displayRoster = di.roster.filter(p => {
-    if (!isPersonVisible(p)) return false;
-    if (outstandingOnly && (!(di.session.attendance[p.id]) || (di.session.payments && di.session.payments[p.id]))) return false;
-    return true;
-  });
+  const displayRoster = di.roster.filter(p => isPersonVisible(p));
 
   const allOn = di.roster.length > 0 && di.attendees.length === di.roster.length;
   const fullyPaid = di.attendees.length > 0 && di.paidCount === di.attendees.length;
@@ -2352,11 +2396,6 @@ function DayCard({ di, allPeople, peopleById, shuttlecocks, isToday, isPast, out
           <li className="roster-empty">
             No one on the {di.label} roster yet.<br/>
             <button onClick={onSwitchToRoster}>Manage people →</button>
-          </li>
-        )}
-        {outstandingOnly && displayRoster.length === 0 && di.roster.length > 0 && (
-          <li className="roster-empty" style={{ color: 'var(--accent-ink)', fontSize: 13 }}>
-            No outstanding payments
           </li>
         )}
         {sortedDisplayRoster.map(p => {
