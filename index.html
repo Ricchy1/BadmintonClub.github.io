@@ -1549,6 +1549,27 @@
       .day-tab { font-size: 14px; padding: 10px 6px; }
       .day-card { max-width: 100%; }
       .sessions { max-width: 100%; }
+
+      /* Scrollable roster on mobile — totals/actions stay visible, names scroll */
+      .roster-list {
+        max-height: calc(100dvh - 480px);
+        min-height: 100px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        position: relative;
+      }
+      /* subtle fade at bottom to indicate more content */
+      .day-card .roster-list::after {
+        content: '';
+        position: sticky;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 24px;
+        display: block;
+        background: linear-gradient(transparent, var(--surface));
+        pointer-events: none;
+      }
     }
     }
   </style>
