@@ -808,7 +808,7 @@
       font-weight: 700;
     }
     .court-booked-chip.row1 { background: #e6f4ea; color: #1a7431; }
-    .court-booked-chip.row2 { background: #e0e7ff; color: #2b3d8f; }
+    .court-booked-chip.row2 { background: #e6f4ea; color: #1a7431; }
     .court-booked-none { font-size: 13px; color: var(--ink-3); font-style: italic; }
 
     .court-layout {
@@ -839,7 +839,7 @@
       width: fit-content;
     }
     .court-row-label.r1 { background: #e6f4ea; color: #1a7431; }
-    .court-row-label.r2 { background: #e0e7ff; color: #2b3d8f; }
+    .court-row-label.r2 { background: #e6f4ea; color: #1a7431; }
     .court-row-wrap { text-align: center; margin-bottom: 14px; }
     .court-row {
       display: grid;
@@ -871,14 +871,14 @@
       transform: scale(1.04);
     }
     .court-cell.r2 {
-      border-color: #3b5bdb;
-      color: #3b5bdb;
-      background: #f0f3ff;
+      border-color: #34a853;
+      color: #34a853;
+      background: #f3faf5;
     }
     .court-cell.r2.booked {
-      background: #3b5bdb;
+      background: #34a853;
       color: #fff;
-      box-shadow: 0 2px 8px rgba(59,91,219,0.35);
+      box-shadow: 0 2px 8px rgba(52,168,83,0.35);
       transform: scale(1.04);
     }
     .court-cell:active { transform: scale(0.95); }
@@ -2065,7 +2065,7 @@ function CourtBookingsView({ state, onToggleCourt }) {
         <div className="court-layout-title">Floor Plan</div>
 
         <div className="court-row-wrap">
-          <div className="court-row-label r1">Row 1 — Badminton</div>
+          <div className="court-row-label r1">Row 1</div>
         </div>
         <div className="court-row">
           {row1.map(n => (
@@ -2078,7 +2078,7 @@ function CourtBookingsView({ state, onToggleCourt }) {
         </div>
 
         <div className="court-row-wrap">
-          <div className="court-row-label r2">Row 2 — Table Tennis</div>
+          <div className="court-row-label r2">Row 2</div>
         </div>
         <div className="court-row">
           {row2.map(n => (
