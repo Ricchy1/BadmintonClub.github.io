@@ -697,12 +697,12 @@
       top: calc(100% + 4px);
       left: 0;
       z-index: 100;
-      min-width: 200px;
+      min-width: 180px;
       background: var(--surface);
       border: 1px solid var(--line);
       border-radius: 10px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-      padding: 10px;
+      padding: 8px;
     }
     .filter-popup.align-right { left: auto; right: 0; }
     .filter-popup-search {
@@ -714,43 +714,35 @@
       outline: none;
       font-family: inherit;
       box-sizing: border-box;
+      margin-bottom: 4px;
     }
     .filter-popup-search:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(74,108,64,0.15); }
-    .filter-popup-label {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--ink-3);
-      margin-bottom: 6px;
+    .filter-popup-list {
+      max-height: 250px;
+      overflow-y: auto;
     }
-    .filter-popup-options {
+    .filter-popup-item {
       display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-      margin-top: 4px;
-    }
-    .filter-opt {
-      padding: 5px 10px;
-      border-radius: 6px;
-      border: 1px solid var(--line-2);
-      background: var(--surface);
-      font-size: 12px;
-      font-weight: 600;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 6px;
       cursor: pointer;
-      color: var(--ink-2);
-      transition: all 0.1s;
+      border-radius: 5px;
+      font-size: 13px;
       white-space: nowrap;
     }
-    .filter-opt:hover { border-color: var(--ink-2); }
-    .filter-opt.on {
-      background: var(--ink);
-      border-color: var(--ink);
-      color: var(--accent);
+    .filter-popup-item:hover { background: var(--bg-2); }
+    .filter-popup-item input[type="checkbox"] {
+      width: 15px; height: 15px;
+      accent-color: var(--accent-ink);
+      cursor: pointer;
+      flex-shrink: 0;
+      margin: 0;
     }
+    .filter-item-label { user-select: none; }
     .filter-clear-btn {
       width: 100%;
-      margin-top: 8px;
+      margin-top: 4px;
       padding: 5px;
       border: 0;
       background: transparent;
@@ -760,6 +752,27 @@
       border-radius: 4px;
     }
     .filter-clear-btn:hover { background: var(--bg-2); color: var(--danger); }
+
+    /* ── Outstanding toggle (sessions) ── */
+    .outstanding-toggle {
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--line-2);
+      background: var(--surface);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.12s;
+    }
+    .outstanding-toggle:hover { border-color: var(--ink-2); }
+    .outstanding-toggle.on {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: var(--accent);
+    }
     .people-table thead th.center { text-align: center; }
     .people-table tbody td {
       padding: 12px 16px;
@@ -1806,6 +1819,7 @@ function StatusFilter({ value, onChange }) {
 /* ───── Sessions view ───── */
 function SessionsView({ weekStart, state, peopleById, shuttlecocks, todayIso, onSetCourt, onToggleAtt, onTogglePay, onMarkAll, onAddPersonToDay, onSwitchToRoster, hiddenDays, onToggleDayVisibility }) {
   const [statusFilter, setStatusFilter] = React.useState('all'); // 'all' | 'paid' | 'unpaid'
+  const [outstandingOnly, setOutstandingOnly] = React.useState(false);
   const visibleDays = DAYS.filter(d => !hiddenDays.includes(d.key));
   const dayInfos = visibleDays.map(d => {
     const date = dateForDayOfWeek(weekStart, d.dow);
@@ -1882,6 +1896,10 @@ function SessionsView({ weekStart, state, peopleById, shuttlecocks, todayIso, on
           })}
         </div>
         <StatusFilter value={statusFilter} onChange={setStatusFilter} />
+        <button className={`outstanding-toggle ${outstandingOnly ? 'on' : ''}`}
+          onClick={() => setOutstandingOnly(v => !v)}>
+          {outstandingOnly ? '✓ ' : ''}Outstanding only
+        </button>
       </div>
       <div className={`sessions cols-${Math.max(1, filteredDayInfos.length)}`}>
         {filteredDayInfos.length === 0 ? (
@@ -1897,6 +1915,7 @@ function SessionsView({ weekStart, state, peopleById, shuttlecocks, todayIso, on
             shuttlecocks={shuttlecocks}
             isToday={di.iso === todayIso}
             isPast={di.iso < todayIso}
+            outstandingOnly={outstandingOnly}
             onSetCourt={onSetCourt}
             onToggleAtt={onToggleAtt}
             onTogglePay={onTogglePay}
@@ -1911,7 +1930,7 @@ function SessionsView({ weekStart, state, peopleById, shuttlecocks, todayIso, on
 }
 
 /* ───── Day card ───── */
-function DayCard({ di, allPeople, peopleById, shuttlecocks, isToday, isPast, onSetCourt, onToggleAtt, onTogglePay, onMarkAll, onAddPersonToDay, onSwitchToRoster }) {
+function DayCard({ di, allPeople, peopleById, shuttlecocks, isToday, isPast, outstandingOnly, onSetCourt, onToggleAtt, onTogglePay, onMarkAll, onAddPersonToDay, onSwitchToRoster }) {
   const [courtStr, setCourtStr] = useState(String(di.session.courtHire || ''));
   const [showAdd, setShowAdd] = useState(false);
 
@@ -1925,6 +1944,11 @@ function DayCard({ di, allPeople, peopleById, shuttlecocks, isToday, isPast, onS
     onSetCourt(di.iso, parseFloat(v) || 0);
   };
 
+  /* Filter roster: when outstandingOnly is on, show only attended + unpaid */
+  const displayRoster = outstandingOnly
+    ? di.roster.filter(p => !!di.session.attendance[p.id] && !(di.session.payments && di.session.payments[p.id]))
+    : di.roster;
+
   const allOn = di.roster.length > 0 && di.attendees.length === di.roster.length;
   const fullyPaid = di.attendees.length > 0 && di.paidCount === di.attendees.length;
   const handleToggleAll = () => {
@@ -1936,6 +1960,14 @@ function DayCard({ di, allPeople, peopleById, shuttlecocks, isToday, isPast, onS
 
   // people not yet in roster (for quick-add)
   const eligibleToAdd = allPeople.filter(p => !p.days.includes(di.key));
+
+  /* Sort displayRoster: attended first, then alphabetical */
+  const sortedDisplayRoster = [...displayRoster].sort((a, b) => {
+    const aAtt = !!di.session.attendance[a.id];
+    const bAtt = !!di.session.attendance[b.id];
+    if (aAtt !== bAtt) return aAtt ? -1 : 1;
+    return (a.name || '').localeCompare(b.name || '');
+  });
 
   return (
     <section className={`day-card ${isToday ? 'is-today' : ''} ${isPast ? 'is-past' : ''} ${fullyPaid ? 'is-fully-paid' : ''}`} data-screen-label={`${di.label} ${di.iso}`}>
@@ -1977,14 +2009,12 @@ function DayCard({ di, allPeople, peopleById, shuttlecocks, isToday, isPast, onS
             <button onClick={onSwitchToRoster}>Manage people →</button>
           </li>
         )}
-        {[...di.roster]
-          .sort((a, b) => {
-            const aAtt = !!di.session.attendance[a.id];
-            const bAtt = !!di.session.attendance[b.id];
-            if (aAtt !== bAtt) return aAtt ? -1 : 1;
-            return (a.name || '').localeCompare(b.name || '');
-          })
-          .map(p => {
+        {outstandingOnly && displayRoster.length === 0 && di.roster.length > 0 && (
+          <li className="roster-empty" style={{ color: 'var(--accent-ink)', fontSize: 13 }}>
+            No outstanding payments
+          </li>
+        )}
+        {sortedDisplayRoster.map(p => {
           const attended = !!di.session.attendance[p.id];
           const paid = !!(di.session.payments && di.session.payments[p.id]);
           const covered = isCoveredOn(p.id, di.iso, shuttlecocks);
@@ -2135,6 +2165,43 @@ function OwedPopover({ title, children, onClose, onMouseEnter, onMouseLeave }) {
   );
 }
 
+/* ───── Filter checkbox popup (Excel-style) ───── */
+function FilterCheckboxPopup({ items, selected, allChecked, searchable, alignRight, onToggle, onSelectAll, onClearAll, onClose }) {
+  const [search, setSearch] = React.useState('');
+  const displayed = searchable && search
+    ? items.filter(it => it.label.toLowerCase().includes(search.toLowerCase()))
+    : items;
+  return (
+    <React.Fragment>
+      <div className="filter-popup-overlay" onClick={onClose} />
+      <div className={`filter-popup ${alignRight ? 'align-right' : ''}`}>
+        {searchable && (
+          <input className="filter-popup-search" placeholder="Search…" autoFocus
+            value={search} onChange={e => setSearch(e.target.value)} />
+        )}
+        <div className="filter-popup-list">
+          <label className="filter-popup-item" onClick={e => { e.preventDefault(); allChecked ? onClearAll() : onSelectAll(); }}>
+            <input type="checkbox" checked={allChecked} readOnly />
+            <span className="filter-item-label" style={{ fontWeight: 700 }}>(Select all)</span>
+          </label>
+          {displayed.map(it => {
+            const checked = !selected || selected.has(it.value);
+            return (
+              <label key={it.value} className="filter-popup-item" onClick={e => { e.preventDefault(); onToggle(it.value); }}>
+                <input type="checkbox" checked={checked} readOnly />
+                <span className="filter-item-label">{it.label}</span>
+              </label>
+            );
+          })}
+        </div>
+        {selected && (
+          <button className="filter-clear-btn" onClick={() => { onSelectAll(); onClose(); }}>Clear filter</button>
+        )}
+      </div>
+    </React.Fragment>
+  );
+}
+
 /* ───── Roster (people management) view ───── */
 function RosterView({ people, shuttlecocks, sessions, newName, setNewName, newNameRef, onAdd, onRemove, onRename, onToggleShuttle, onToggleLangdon, onSetAllShuttle, onToggleDay }) {
   const allPaid = people.length > 0 && people.every(p => p.shuttlePaid);
@@ -2204,56 +2271,74 @@ function RosterView({ people, shuttlecocks, sessions, newName, setNewName, newNa
   const [sortCol, setSortCol] = React.useState(null);
   const [sortDir, setSortDir] = React.useState('asc');
   const toggleSort = (col) => {
-    if (sortCol === col) {
-      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortCol(col);
-      setSortDir(col === 'name' || col === 'days' || col === 'langdon' || col === 'coverage' ? 'asc' : 'desc');
-    }
+    if (sortCol === col) { setSortDir(d => d === 'asc' ? 'desc' : 'asc'); }
+    else { setSortCol(col); setSortDir(col === 'name' || col === 'days' || col === 'langdon' || col === 'coverage' ? 'asc' : 'desc'); }
   };
 
-  /* ── Filter state ── */
-  const [filters, setFilters] = React.useState({
-    name: '',
-    days: [],
-    langdon: null,
-    coverage: null,
-    owes_sessions: null,
-    owes_shuttles: null,
-    total: null,
-  });
+  /* ── Column filters (Excel-style checkbox lists) ── */
+  const [colFilters, setColFilters] = React.useState({});   // col → Set of included values, or absent = all
   const [filterOpen, setFilterOpen] = React.useState(null);
-  const setFilter = (key, val) => setFilters(f => ({ ...f, [key]: val }));
-  const hasFilter = (key) => {
-    const v = filters[key];
-    if (v === null || v === '' || v === undefined) return false;
-    if (Array.isArray(v)) return v.length > 0;
-    return true;
+
+  const getPersonColValue = React.useCallback((p, col) => {
+    switch (col) {
+      case 'name': return p.name || '';
+      case 'langdon': return p.langdon ? 'Yes' : 'No';
+      case 'coverage':
+        return p.langdon ? 'Exempt (Langdon)' : (coveredById[p.id] ? 'Covered' : 'Not covered (+$2)');
+      case 'owes_sessions': return money(sessionOwed[p.id] || 0);
+      case 'owes_shuttles': return money(shuttleOwed[p.id] || 0);
+      case 'total': return money((sessionOwed[p.id] || 0) + (shuttleOwed[p.id] || 0));
+      default: return '';
+    }
+  }, [coveredById, sessionOwed, shuttleOwed]);
+
+  const getColItems = React.useCallback((col) => {
+    if (col === 'days') return DAYS.map(d => ({ value: d.key, label: d.short }));
+    const seen = new Map();
+    people.forEach(p => { const v = getPersonColValue(p, col); if (!seen.has(v)) seen.set(v, v); });
+    return [...seen.keys()].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).map(v => ({ value: v, label: v }));
+  }, [people, getPersonColValue]);
+
+  const toggleFilterValue = (col, val) => {
+    setColFilters(prev => {
+      const allVals = getColItems(col).map(it => it.value);
+      const cur = prev[col];
+      if (!cur) {
+        const s = new Set(allVals); s.delete(val);
+        return s.size > 0 ? { ...prev, [col]: s } : prev;
+      }
+      const s = new Set(cur);
+      if (s.has(val)) { if (s.size <= 1) return prev; s.delete(val); }
+      else { s.add(val); if (s.size >= allVals.length) { const next = { ...prev }; delete next[col]; return next; } }
+      return { ...prev, [col]: s };
+    });
   };
-  const clearFilter = (key) => {
-    setFilters(f => ({ ...f, [key]: Array.isArray(f[key]) ? [] : (typeof f[key] === 'string' ? '' : null) }));
+  const selectAllInFilter = (col) => setColFilters(prev => { const next = { ...prev }; delete next[col]; return next; });
+  const clearAllInFilter = (col) => {
+    const allVals = getColItems(col).map(it => it.value);
+    if (allVals.length > 0) setColFilters(prev => ({ ...prev, [col]: new Set([allVals[0]]) }));
   };
-  const anyFilterActive = Object.keys(filters).some(k => hasFilter(k));
+  const isColFiltered = (col) => !!colFilters[col];
+  const anyFilterActive = Object.keys(colFilters).length > 0;
+  const clearAllFilters = () => setColFilters({});
 
   /* ── Apply filters then sort ── */
   const filteredPeople = React.useMemo(() => {
+    const activeCols = Object.keys(colFilters);
+    if (activeCols.length === 0) return people;
     return people.filter(p => {
-      if (filters.name && !(p.name || '').toLowerCase().includes(filters.name.toLowerCase())) return false;
-      if (filters.days.length > 0 && !filters.days.some(d => (p.days || []).includes(d))) return false;
-      if (filters.langdon === true && !p.langdon) return false;
-      if (filters.langdon === false && p.langdon) return false;
-      if (filters.coverage === 'covered' && !(p.langdon || coveredById[p.id])) return false;
-      if (filters.coverage === 'not_covered' && (p.langdon || coveredById[p.id])) return false;
-      if (filters.owes_sessions === 'has_balance' && (sessionOwed[p.id] || 0) <= 0) return false;
-      if (filters.owes_sessions === 'zero' && (sessionOwed[p.id] || 0) > 0) return false;
-      if (filters.owes_shuttles === 'has_balance' && (shuttleOwed[p.id] || 0) <= 0) return false;
-      if (filters.owes_shuttles === 'zero' && (shuttleOwed[p.id] || 0) > 0) return false;
-      const total = (sessionOwed[p.id] || 0) + (shuttleOwed[p.id] || 0);
-      if (filters.total === 'has_balance' && total <= 0) return false;
-      if (filters.total === 'zero' && total > 0) return false;
+      for (const col of activeCols) {
+        const allowed = colFilters[col];
+        if (!allowed) continue;
+        if (col === 'days') {
+          if (!(p.days || []).some(d => allowed.has(d))) return false;
+        } else {
+          if (!allowed.has(getPersonColValue(p, col))) return false;
+        }
+      }
       return true;
     });
-  }, [people, filters, coveredById, sessionOwed, shuttleOwed]);
+  }, [people, colFilters, getPersonColValue]);
 
   const sortedPeople = React.useMemo(() => {
     if (!sortCol) return filteredPeople;
@@ -2262,25 +2347,16 @@ function RosterView({ people, shuttlecocks, sessions, newName, setNewName, newNa
     arr.sort((a, b) => {
       let va, vb;
       switch (sortCol) {
-        case 'name':
-          return dir * (a.name || '').localeCompare(b.name || '');
-        case 'days':
-          return dir * ((a.days || []).length - (b.days || []).length);
-        case 'langdon':
-          va = a.langdon ? 1 : 0;
-          vb = b.langdon ? 1 : 0;
-          return dir * (va - vb);
+        case 'name': return dir * (a.name || '').localeCompare(b.name || '');
+        case 'days': return dir * ((a.days || []).length - (b.days || []).length);
+        case 'langdon': return dir * ((a.langdon ? 1 : 0) - (b.langdon ? 1 : 0));
         case 'coverage':
-          va = (a.langdon || coveredById[a.id]) ? 1 : 0;
-          vb = (b.langdon || coveredById[b.id]) ? 1 : 0;
+          va = (a.langdon || coveredById[a.id]) ? 1 : 0; vb = (b.langdon || coveredById[b.id]) ? 1 : 0;
           return dir * (va - vb);
-        case 'owes_sessions':
-          return dir * ((sessionOwed[a.id] || 0) - (sessionOwed[b.id] || 0));
-        case 'owes_shuttles':
-          return dir * ((shuttleOwed[a.id] || 0) - (shuttleOwed[b.id] || 0));
+        case 'owes_sessions': return dir * ((sessionOwed[a.id] || 0) - (sessionOwed[b.id] || 0));
+        case 'owes_shuttles': return dir * ((shuttleOwed[a.id] || 0) - (shuttleOwed[b.id] || 0));
         case 'total':
-          va = (sessionOwed[a.id] || 0) + (shuttleOwed[a.id] || 0);
-          vb = (sessionOwed[b.id] || 0) + (shuttleOwed[b.id] || 0);
+          va = (sessionOwed[a.id] || 0) + (shuttleOwed[a.id] || 0); vb = (sessionOwed[b.id] || 0) + (shuttleOwed[b.id] || 0);
           return dir * (va - vb);
         default: return 0;
       }
@@ -2327,178 +2403,55 @@ function RosterView({ people, shuttlecocks, sessions, newName, setNewName, newNa
         <div className="table-scroll">
         {anyFilterActive && (
           <div style={{ padding: '8px 10px', display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--ink-3)' }}>
-            <span>Showing {sortedPeople.length} of {people.length} players</span>
+            <span>Showing {sortedPeople.length} of {people.length}</span>
             <button className="filter-clear-btn" style={{ width: 'auto', margin: 0, padding: '3px 8px', fontSize: 11 }}
-              onClick={() => setFilters({ name: '', days: [], langdon: null, coverage: null, owes_sessions: null, owes_shuttles: null, total: null })}>
-              Clear all filters
-            </button>
+              onClick={clearAllFilters}>Clear all filters</button>
           </div>
         )}
         <table className="people-table">
           <thead>
             <tr>
-              {/* ── Name ── */}
-              <th className="sortable" style={{ width: '20%' }}>
-                <div className="col-header">
-                  <span className={`col-header-name ${hasFilter('name') ? 'has-filter' : ''}`}
-                    onClick={() => setFilterOpen(f => f === 'name' ? null : 'name')}>
-                    Name {hasFilter('name') && <span className="filter-dot" />}
-                  </span>
-                  <button className={`col-sort-btn ${sortCol === 'name' ? 'active' : ''}`} onClick={() => toggleSort('name')}>
-                    {sortCol === 'name' ? (sortDir === 'asc' ? '▲' : '▼') : '▲'}
-                  </button>
-                  {filterOpen === 'name' && (<>
-                    <div className="filter-popup-overlay" onClick={() => setFilterOpen(null)} />
-                    <div className="filter-popup">
-                      <input className="filter-popup-search" placeholder="Search names…" autoFocus
-                        value={filters.name} onChange={e => setFilter('name', e.target.value)} />
-                      {hasFilter('name') && <button className="filter-clear-btn" onClick={() => { clearFilter('name'); setFilterOpen(null); }}>Clear</button>}
+              {[
+                { col: 'name',          label: 'Name',             width: '20%', align: '',       searchable: true },
+                { col: 'days',          label: 'Regular days',     width: '15%', align: 'center' },
+                { col: 'langdon',       label: 'Langdon',          width: '10%', align: 'center' },
+                { col: 'coverage',      label: 'Shuttle coverage', width: '15%', align: 'center' },
+                { col: 'owes_sessions', label: 'Owes (sessions)',  width: '12%', align: 'right',  alignPopup: 'right' },
+                { col: 'owes_shuttles', label: 'Owes (shuttles)',  width: '12%', align: 'right',  alignPopup: 'right' },
+                { col: 'total',         label: 'Total owed',       width: '11%', align: 'right',  alignPopup: 'right' },
+              ].map(h => {
+                const items = getColItems(h.col);
+                const filtered = isColFiltered(h.col);
+                const curFilter = colFilters[h.col];
+                const allChecked = !curFilter;
+                return (
+                  <th key={h.col} className="sortable" style={{ width: h.width }}>
+                    <div className={`col-header ${h.align || ''}`}>
+                      <span className={`col-header-name ${filtered ? 'has-filter' : ''}`}
+                        onClick={() => setFilterOpen(f => f === h.col ? null : h.col)}>
+                        {h.label} {filtered && <span className="filter-dot" />}
+                      </span>
+                      <button className={`col-sort-btn ${sortCol === h.col ? 'active' : ''}`}
+                        onClick={() => toggleSort(h.col)}>
+                        {sortCol === h.col ? (sortDir === 'asc' ? '▲' : '▼') : (h.align === 'right' ? '▼' : '▲')}
+                      </button>
+                      {filterOpen === h.col && (
+                        <FilterCheckboxPopup
+                          items={items}
+                          selected={curFilter}
+                          allChecked={allChecked}
+                          searchable={h.searchable}
+                          alignRight={h.alignPopup === 'right'}
+                          onToggle={(val) => toggleFilterValue(h.col, val)}
+                          onSelectAll={() => selectAllInFilter(h.col)}
+                          onClearAll={() => clearAllInFilter(h.col)}
+                          onClose={() => setFilterOpen(null)}
+                        />
+                      )}
                     </div>
-                  </>)}
-                </div>
-              </th>
-              {/* ── Regular days ── */}
-              <th className="sortable center" style={{ width: '15%' }}>
-                <div className="col-header center">
-                  <span className={`col-header-name ${hasFilter('days') ? 'has-filter' : ''}`}
-                    onClick={() => setFilterOpen(f => f === 'days' ? null : 'days')}>
-                    Regular days {hasFilter('days') && <span className="filter-dot" />}
-                  </span>
-                  <button className={`col-sort-btn ${sortCol === 'days' ? 'active' : ''}`} onClick={() => toggleSort('days')}>
-                    {sortCol === 'days' ? (sortDir === 'asc' ? '▲' : '▼') : '▲'}
-                  </button>
-                  {filterOpen === 'days' && (<>
-                    <div className="filter-popup-overlay" onClick={() => setFilterOpen(null)} />
-                    <div className="filter-popup">
-                      <div className="filter-popup-label">Plays on</div>
-                      <div className="filter-popup-options">
-                        {DAYS.map(d => (
-                          <button key={d.key} className={`filter-opt ${filters.days.includes(d.key) ? 'on' : ''}`}
-                            onClick={() => setFilter('days', filters.days.includes(d.key) ? filters.days.filter(x => x !== d.key) : [...filters.days, d.key])}>
-                            {d.short}
-                          </button>
-                        ))}
-                      </div>
-                      {hasFilter('days') && <button className="filter-clear-btn" onClick={() => { clearFilter('days'); setFilterOpen(null); }}>Clear</button>}
-                    </div>
-                  </>)}
-                </div>
-              </th>
-              {/* ── Langdon ── */}
-              <th className="sortable center" style={{ width: '10%' }}>
-                <div className="col-header center">
-                  <span className={`col-header-name ${hasFilter('langdon') ? 'has-filter' : ''}`}
-                    onClick={() => setFilterOpen(f => f === 'langdon' ? null : 'langdon')}>
-                    Langdon {hasFilter('langdon') && <span className="filter-dot" />}
-                  </span>
-                  <button className={`col-sort-btn ${sortCol === 'langdon' ? 'active' : ''}`} onClick={() => toggleSort('langdon')}>
-                    {sortCol === 'langdon' ? (sortDir === 'asc' ? '▲' : '▼') : '▲'}
-                  </button>
-                  {filterOpen === 'langdon' && (<>
-                    <div className="filter-popup-overlay" onClick={() => setFilterOpen(null)} />
-                    <div className="filter-popup">
-                      <div className="filter-popup-options">
-                        <button className={`filter-opt ${filters.langdon === null ? 'on' : ''}`} onClick={() => setFilter('langdon', null)}>All</button>
-                        <button className={`filter-opt ${filters.langdon === true ? 'on' : ''}`} onClick={() => setFilter('langdon', true)}>Yes</button>
-                        <button className={`filter-opt ${filters.langdon === false ? 'on' : ''}`} onClick={() => setFilter('langdon', false)}>No</button>
-                      </div>
-                      {hasFilter('langdon') && <button className="filter-clear-btn" onClick={() => { clearFilter('langdon'); setFilterOpen(null); }}>Clear</button>}
-                    </div>
-                  </>)}
-                </div>
-              </th>
-              {/* ── Shuttle coverage ── */}
-              <th className="sortable center" style={{ width: '15%' }}>
-                <div className="col-header center">
-                  <span className={`col-header-name ${hasFilter('coverage') ? 'has-filter' : ''}`}
-                    onClick={() => setFilterOpen(f => f === 'coverage' ? null : 'coverage')}>
-                    Shuttle coverage {hasFilter('coverage') && <span className="filter-dot" />}
-                  </span>
-                  <button className={`col-sort-btn ${sortCol === 'coverage' ? 'active' : ''}`} onClick={() => toggleSort('coverage')}>
-                    {sortCol === 'coverage' ? (sortDir === 'asc' ? '▲' : '▼') : '▲'}
-                  </button>
-                  {filterOpen === 'coverage' && (<>
-                    <div className="filter-popup-overlay" onClick={() => setFilterOpen(null)} />
-                    <div className="filter-popup">
-                      <div className="filter-popup-options">
-                        <button className={`filter-opt ${filters.coverage === null ? 'on' : ''}`} onClick={() => setFilter('coverage', null)}>All</button>
-                        <button className={`filter-opt ${filters.coverage === 'covered' ? 'on' : ''}`} onClick={() => setFilter('coverage', 'covered')}>Covered</button>
-                        <button className={`filter-opt ${filters.coverage === 'not_covered' ? 'on' : ''}`} onClick={() => setFilter('coverage', 'not_covered')}>Not covered</button>
-                      </div>
-                      {hasFilter('coverage') && <button className="filter-clear-btn" onClick={() => { clearFilter('coverage'); setFilterOpen(null); }}>Clear</button>}
-                    </div>
-                  </>)}
-                </div>
-              </th>
-              {/* ── Owes (sessions) ── */}
-              <th className="sortable right" style={{ width: '12%' }}>
-                <div className="col-header right">
-                  <span className={`col-header-name ${hasFilter('owes_sessions') ? 'has-filter' : ''}`}
-                    onClick={() => setFilterOpen(f => f === 'owes_sessions' ? null : 'owes_sessions')}>
-                    Owes (sessions) {hasFilter('owes_sessions') && <span className="filter-dot" />}
-                  </span>
-                  <button className={`col-sort-btn ${sortCol === 'owes_sessions' ? 'active' : ''}`} onClick={() => toggleSort('owes_sessions')}>
-                    {sortCol === 'owes_sessions' ? (sortDir === 'asc' ? '▲' : '▼') : '▼'}
-                  </button>
-                  {filterOpen === 'owes_sessions' && (<>
-                    <div className="filter-popup-overlay" onClick={() => setFilterOpen(null)} />
-                    <div className="filter-popup align-right">
-                      <div className="filter-popup-options">
-                        <button className={`filter-opt ${filters.owes_sessions === null ? 'on' : ''}`} onClick={() => setFilter('owes_sessions', null)}>All</button>
-                        <button className={`filter-opt ${filters.owes_sessions === 'has_balance' ? 'on' : ''}`} onClick={() => setFilter('owes_sessions', 'has_balance')}>Has balance</button>
-                        <button className={`filter-opt ${filters.owes_sessions === 'zero' ? 'on' : ''}`} onClick={() => setFilter('owes_sessions', 'zero')}>Zero</button>
-                      </div>
-                      {hasFilter('owes_sessions') && <button className="filter-clear-btn" onClick={() => { clearFilter('owes_sessions'); setFilterOpen(null); }}>Clear</button>}
-                    </div>
-                  </>)}
-                </div>
-              </th>
-              {/* ── Owes (shuttles) ── */}
-              <th className="sortable right" style={{ width: '12%' }}>
-                <div className="col-header right">
-                  <span className={`col-header-name ${hasFilter('owes_shuttles') ? 'has-filter' : ''}`}
-                    onClick={() => setFilterOpen(f => f === 'owes_shuttles' ? null : 'owes_shuttles')}>
-                    Owes (shuttles) {hasFilter('owes_shuttles') && <span className="filter-dot" />}
-                  </span>
-                  <button className={`col-sort-btn ${sortCol === 'owes_shuttles' ? 'active' : ''}`} onClick={() => toggleSort('owes_shuttles')}>
-                    {sortCol === 'owes_shuttles' ? (sortDir === 'asc' ? '▲' : '▼') : '▼'}
-                  </button>
-                  {filterOpen === 'owes_shuttles' && (<>
-                    <div className="filter-popup-overlay" onClick={() => setFilterOpen(null)} />
-                    <div className="filter-popup align-right">
-                      <div className="filter-popup-options">
-                        <button className={`filter-opt ${filters.owes_shuttles === null ? 'on' : ''}`} onClick={() => setFilter('owes_shuttles', null)}>All</button>
-                        <button className={`filter-opt ${filters.owes_shuttles === 'has_balance' ? 'on' : ''}`} onClick={() => setFilter('owes_shuttles', 'has_balance')}>Has balance</button>
-                        <button className={`filter-opt ${filters.owes_shuttles === 'zero' ? 'on' : ''}`} onClick={() => setFilter('owes_shuttles', 'zero')}>Zero</button>
-                      </div>
-                      {hasFilter('owes_shuttles') && <button className="filter-clear-btn" onClick={() => { clearFilter('owes_shuttles'); setFilterOpen(null); }}>Clear</button>}
-                    </div>
-                  </>)}
-                </div>
-              </th>
-              {/* ── Total owed ── */}
-              <th className="sortable right" style={{ width: '11%' }}>
-                <div className="col-header right">
-                  <span className={`col-header-name ${hasFilter('total') ? 'has-filter' : ''}`}
-                    onClick={() => setFilterOpen(f => f === 'total' ? null : 'total')}>
-                    Total owed {hasFilter('total') && <span className="filter-dot" />}
-                  </span>
-                  <button className={`col-sort-btn ${sortCol === 'total' ? 'active' : ''}`} onClick={() => toggleSort('total')}>
-                    {sortCol === 'total' ? (sortDir === 'asc' ? '▲' : '▼') : '▼'}
-                  </button>
-                  {filterOpen === 'total' && (<>
-                    <div className="filter-popup-overlay" onClick={() => setFilterOpen(null)} />
-                    <div className="filter-popup align-right">
-                      <div className="filter-popup-options">
-                        <button className={`filter-opt ${filters.total === null ? 'on' : ''}`} onClick={() => setFilter('total', null)}>All</button>
-                        <button className={`filter-opt ${filters.total === 'has_balance' ? 'on' : ''}`} onClick={() => setFilter('total', 'has_balance')}>Has balance</button>
-                        <button className={`filter-opt ${filters.total === 'zero' ? 'on' : ''}`} onClick={() => setFilter('total', 'zero')}>Zero</button>
-                      </div>
-                      {hasFilter('total') && <button className="filter-clear-btn" onClick={() => { clearFilter('total'); setFilterOpen(null); }}>Clear</button>}
-                    </div>
-                  </>)}
-                </div>
-              </th>
+                  </th>
+                );
+              })}
               <th style={{ width: '5%' }}></th>
             </tr>
           </thead>
