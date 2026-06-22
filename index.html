@@ -940,10 +940,10 @@
     }
 
     /* ── Untick confirmation popup ── */
-    .untick-confirm-overlay {
+    .confirm-overlay {
       position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.15);
     }
-    .untick-confirm {
+    .confirm-dialog {
       position: fixed;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%);
@@ -957,23 +957,23 @@
       max-width: 340px;
       text-align: center;
     }
-    .untick-confirm-name {
+    .confirm-dialog-title {
       font-size: 15px;
       font-weight: 700;
       color: var(--ink);
       margin-bottom: 4px;
     }
-    .untick-confirm-msg {
+    .confirm-dialog-msg {
       font-size: 13px;
       color: var(--ink-2);
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
-    .untick-confirm-btns {
+    .confirm-dialog-btns {
       display: flex;
       gap: 8px;
       justify-content: center;
     }
-    .untick-confirm-btns button {
+    .confirm-dialog-btns button {
       padding: 8px 18px;
       border-radius: 8px;
       font-size: 13px;
@@ -984,13 +984,35 @@
       color: var(--ink-2);
       transition: all 0.1s;
     }
-    .untick-confirm-btns button:hover { border-color: var(--ink-2); }
-    .untick-confirm-btns button.confirm {
+    .confirm-dialog-btns button:hover { border-color: var(--ink-2); }
+    .confirm-dialog-btns button.confirm-primary {
+      background: var(--accent-ink);
+      border-color: var(--accent-ink);
+      color: #fff;
+    }
+    .confirm-dialog-btns button.confirm-primary:hover { opacity: 0.85; }
+    .confirm-dialog-btns button.confirm-danger {
       background: var(--danger);
       border-color: var(--danger);
       color: #fff;
     }
-    .untick-confirm-btns button.confirm:hover { opacity: 0.85; }
+    .confirm-dialog-btns button.confirm-danger:hover { opacity: 0.85; }
+    .pay-password-input {
+      width: 100%;
+      border: 1.5px solid var(--line-2);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 15px;
+      font-family: inherit;
+      text-align: center;
+      letter-spacing: 0.15em;
+      font-weight: 700;
+      outline: none;
+      margin-bottom: 6px;
+      box-sizing: border-box;
+    }
+    .pay-password-input:focus { border-color: var(--accent-ink); box-shadow: 0 0 0 2px rgba(74,108,64,0.15); }
+    .pay-password-error { font-size: 12px; color: var(--danger); margin-bottom: 10px; }
     .people-table thead th.center { text-align: center; }
     .people-table tbody td {
       padding: 12px 16px;
@@ -1447,7 +1469,7 @@
     .history-summary .hs-value { font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 700; }
 
     /* ───── Mobile: ultra-compact, zero-scroll ───── */
-    @media (max-width: 1024px) {
+    @media (max-width: 767px) {
       body { font-size: 13px; }
       .app { padding: 4px 6px 8px; width: 100%; }
 
@@ -1736,6 +1758,10 @@ function App() {
   const [newName, setNewName] = useState('');
   const [hiddenDays, setHiddenDays] = useState([]);
   const [colFilters, setColFilters] = useState({});
+  const [payPending, setPayPending] = useState(null); // { date, personId } when password needed
+  const [payError, setPayError] = useState('');
+  const payUnlocked = useRef(false);
+  const payInputRef = useRef(null);
   const newNameRef = useRef(null);
   const loaded = useRef(false);
   /*
@@ -1865,6 +1891,25 @@ function App() {
       pay[personId] = !pay[personId];
       return { ...ss, [date]: { ...cur, payments: pay, attendance: cur.attendance || {} } };
     });
+  }
+  function handleTogglePay(date, personId) {
+    if (payUnlocked.current) {
+      togglePayment(date, personId);
+    } else {
+      setPayPending({ date, personId });
+      setPayError('');
+      setTimeout(() => { if (payInputRef.current) payInputRef.current.focus(); }, 50);
+    }
+  }
+  function submitPayPassword(val) {
+    if (val === 'RIALM') {
+      payUnlocked.current = true;
+      if (payPending) togglePayment(payPending.date, payPending.personId);
+      setPayPending(null);
+      setPayError('');
+    } else {
+      setPayError('Incorrect password');
+    }
   }
   function markAllAttended(date, personIds, value) {
     updateSessions(ss => {
@@ -2013,7 +2058,7 @@ function App() {
           todayIso={todayIso}
           onSetCourt={setCourtHire}
           onToggleAtt={toggleAttendance}
-          onTogglePay={togglePayment}
+          onTogglePay={handleTogglePay}
           onMarkAll={markAllAttended}
           onAddPersonToDay={addPersonToDay}
           onSwitchToRoster={() => setTab('roster')}
@@ -2063,6 +2108,29 @@ function App() {
           people={state.people}
           shuttlecocks={state.shuttlecocks || []}
         />
+      )}
+
+      {payPending && (
+        <React.Fragment>
+          <div className="confirm-overlay" onClick={() => { setPayPending(null); setPayError(''); }} />
+          <div className="confirm-dialog">
+            <div className="confirm-dialog-title">Enter password</div>
+            <div className="confirm-dialog-msg">Required to mark payments</div>
+            <input
+              ref={payInputRef}
+              type="password"
+              className="pay-password-input"
+              placeholder="Password"
+              autoComplete="off"
+              onKeyDown={e => { if (e.key === 'Enter') submitPayPassword(e.target.value); }}
+            />
+            {payError && <div className="pay-password-error">{payError}</div>}
+            <div className="confirm-dialog-btns">
+              <button onClick={() => { setPayPending(null); setPayError(''); }}>Cancel</button>
+              <button className="confirm-primary" onClick={() => submitPayPassword(payInputRef.current.value)}>Unlock</button>
+            </div>
+          </div>
+        </React.Fragment>
       )}
     </div>
   );
@@ -2503,13 +2571,13 @@ function DayCard({ di, allPeople, peopleById, shuttlecocks, isToday, isPast, col
 
       {confirmUntick && (
         <React.Fragment>
-          <div className="untick-confirm-overlay" onClick={() => setConfirmUntick(null)} />
-          <div className="untick-confirm">
-            <div className="untick-confirm-name">{confirmUntick.name}</div>
-            <div className="untick-confirm-msg">Unmark attendance for this session?</div>
-            <div className="untick-confirm-btns">
+          <div className="confirm-overlay" onClick={() => setConfirmUntick(null)} />
+          <div className="confirm-dialog">
+            <div className="confirm-dialog-title">{confirmUntick.name}</div>
+            <div className="confirm-dialog-msg">Unmark attendance for this session?</div>
+            <div className="confirm-dialog-btns">
               <button onClick={() => setConfirmUntick(null)}>Cancel</button>
-              <button className="confirm" onClick={doUntick}>Yes, unmark</button>
+              <button className="confirm-danger" onClick={doUntick}>Yes, unmark</button>
             </div>
           </div>
         </React.Fragment>
