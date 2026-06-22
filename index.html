@@ -2679,20 +2679,20 @@ function FilterCheckboxPopup({ items, selected, searchable, alignRight, onToggle
           <input className="filter-popup-search" placeholder="Search…" autoFocus
             value={search} onChange={e => setSearch(e.target.value)} />
         )}
-        <label className="filter-popup-item add-to-current"
-          onClick={e => { e.preventDefault(); setAddToCurrent(v => !v); }}>
-          <input type="checkbox" checked={addToCurrent} readOnly />
+        <div className="filter-popup-item add-to-current"
+          onClick={() => setAddToCurrent(v => !v)}>
+          <input type="checkbox" checked={addToCurrent} readOnly tabIndex={-1} />
           <span className="filter-item-label">Add to current filtered items</span>
-        </label>
+        </div>
         <div className="filter-popup-list">
           {displayed.map(it => {
             const checked = !!selected && selected.has(it.value);
             return (
-              <label key={it.value} className="filter-popup-item"
-                onClick={e => { e.preventDefault(); onToggle(it.value, addToCurrent); }}>
-                <input type="checkbox" checked={checked} readOnly />
+              <div key={it.value} className="filter-popup-item"
+                onClick={() => onToggle(it.value, addToCurrent)}>
+                <input type="checkbox" checked={checked} readOnly tabIndex={-1} />
                 <span className="filter-item-label">{it.label}</span>
-              </label>
+              </div>
             );
           })}
         </div>
