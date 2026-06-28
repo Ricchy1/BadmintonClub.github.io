@@ -922,20 +922,34 @@
     /* ── Court cell with time ── */
     .court-num { font-size: 20px; font-weight: 800; line-height: 1.2; }
     .court-time {
-      font-size: 9.5px;
-      font-weight: 700;
+      font-size: 10px;
+      font-weight: 600;
       line-height: 1;
-      opacity: 0.9;
       letter-spacing: -0.01em;
       white-space: nowrap;
+      background: rgba(255,255,255,0.25);
+      padding: 2px 5px;
+      border-radius: 4px;
+      margin-top: 2px;
     }
+    .court-time-pm {
+      font-size: 8px;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-left: 1px;
+      opacity: 0.85;
+    }
+    /* Unbooked cells shouldn't reserve time space */
+    .court-cell:not(.booked) { min-height: 56px; }
 
     /* ── Chip time badge ── */
     .chip-time {
       font-weight: 600;
-      font-size: 11px;
-      opacity: 0.8;
-      margin-left: 2px;
+      font-size: 11.5px;
+      opacity: 0.7;
+      margin-left: 4px;
+      padding-left: 5px;
+      border-left: 1.5px solid currentColor;
     }
 
     /* ── Time edit dialog ── */
@@ -2097,7 +2111,7 @@ function App() {
   function toggleDayVisibility(dayKey) {
     setHiddenDays(prev => prev.includes(dayKey) ? prev.filter(d => d !== dayKey) : [...prev, dayKey]);
   }
-  function toggleCourtBooking(dateIso, courtNum) {
+  function toggleCourtBooking(dateIso, courtNum, defaultStart, defaultEnd) {
     setState(s => {
       const bookings = { ...(s.courtBookings || {}) };
       const dayData = { ...getCourtDay(s.courtBookings, dateIso) };
@@ -2105,7 +2119,7 @@ function App() {
       if (dayData[key]) {
         delete dayData[key];
       } else {
-        dayData[key] = { start: '18:00', end: '19:30' };
+        dayData[key] = { start: defaultStart || '18:00', end: defaultEnd || '19:30' };
       }
       bookings[dateIso] = dayData;
       return { ...s, courtBookings: bookings };
@@ -2330,15 +2344,20 @@ function CourtBookingsView({ state, onToggleCourt, onUpdateCourtTimes }) {
   const row1 = [1, 2, 3, 4, 5, 6, 7];
   const row2 = [14, 13, 12, 11, 10, 9, 8];
 
+  // Per-day defaults: Tue 6–7:30 pm, Sat 6–8 pm
+  const dayDefaults = activeDay === 'sat'
+    ? { start: '18:00', end: '20:00' }
+    : { start: '18:00', end: '19:30' };
+
   const handleCellClick = (courtNum) => {
     const key = String(courtNum);
     if (bookedMap[key]) {
       // Already booked — open editor
       setEditing({ dateIso: nextIso, court: courtNum, start: bookedMap[key].start, end: bookedMap[key].end });
     } else {
-      // Book with defaults then open editor
-      onToggleCourt(nextIso, courtNum);
-      setEditing({ dateIso: nextIso, court: courtNum, start: '18:00', end: '19:30' });
+      // Book with day-specific defaults then open editor
+      onToggleCourt(nextIso, courtNum, dayDefaults.start, dayDefaults.end);
+      setEditing({ dateIso: nextIso, court: courtNum, start: dayDefaults.start, end: dayDefaults.end });
     }
   };
 
@@ -2365,7 +2384,7 @@ function CourtBookingsView({ state, onToggleCourt, onUpdateCourtTimes }) {
         onClick={() => handleCellClick(n)}>
         <span className="court-num">{n}</span>
         {isBooked && info && (
-          <span className="court-time">{fmtTime12(info.start)}–{fmtTime12(info.end)}</span>
+          <span className="court-time">{fmtTime12(info.start)}–{fmtTime12(info.end)}<span className="court-time-pm">pm</span></span>
         )}
       </button>
     );
@@ -2400,7 +2419,7 @@ function CourtBookingsView({ state, onToggleCourt, onUpdateCourtTimes }) {
             return (
               <span key={c} className={`court-booked-chip ${c <= 7 ? 'row1' : 'row2'}`}>
                 Court {c}
-                {info && <span className="chip-time">{fmtTime12(info.start)}–{fmtTime12(info.end)}</span>}
+                {info && <span className="chip-time">{fmtTime12(info.start)}–{fmtTime12(info.end)} PM</span>}
               </span>
             );
           })}
