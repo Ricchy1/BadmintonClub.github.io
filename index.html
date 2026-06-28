@@ -2569,7 +2569,7 @@ function DayCard({ di, allPeople, peopleById, shuttlecocks, isToday, isPast, col
         })}
       </ul>
 
-      {confirmUntick && (
+      {confirmUntick && ReactDOM.createPortal(
         <React.Fragment>
           <div className="confirm-overlay" onClick={() => setConfirmUntick(null)} />
           <div className="confirm-dialog">
@@ -2580,7 +2580,8 @@ function DayCard({ di, allPeople, peopleById, shuttlecocks, isToday, isPast, col
               <button className="confirm-danger" onClick={doUntick}>Yes, unmark</button>
             </div>
           </div>
-        </React.Fragment>
+        </React.Fragment>,
+        document.body
       )}
     </section>
   );
