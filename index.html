@@ -851,14 +851,18 @@
       margin-bottom: 16px;
     }
     .court-cell {
-      aspect-ratio: 1;
       border-radius: 10px;
       border: 2.5px solid;
       font-size: 20px;
       font-weight: 800;
       cursor: pointer;
-      display: grid;
-      place-items: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1px;
+      min-height: 64px;
+      padding: 6px 2px;
       transition: all 0.15s ease;
       -webkit-tap-highlight-color: transparent;
     }
@@ -885,6 +889,99 @@
       transform: scale(1.04);
     }
     .court-cell:active { transform: scale(0.95); }
+
+    /* ── Court day tabs ── */
+    .court-day-tabs {
+      display: flex;
+      gap: 2px;
+      background: var(--bg-2);
+      padding: 4px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      width: fit-content;
+    }
+    .court-day-tab {
+      border: 0;
+      background: transparent;
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 16px;
+      color: var(--ink-2);
+      cursor: pointer;
+      letter-spacing: -0.005em;
+      transition: all 0.12s;
+    }
+    .court-day-tab:hover { color: var(--ink); }
+    .court-day-tab.active {
+      background: var(--surface);
+      color: var(--ink);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    }
+
+    /* ── Court cell with time ── */
+    .court-num { font-size: 20px; font-weight: 800; line-height: 1.2; }
+    .court-time {
+      font-size: 9.5px;
+      font-weight: 700;
+      line-height: 1;
+      opacity: 0.9;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+    }
+
+    /* ── Chip time badge ── */
+    .chip-time {
+      font-weight: 600;
+      font-size: 11px;
+      opacity: 0.8;
+      margin-left: 2px;
+    }
+
+    /* ── Time edit dialog ── */
+    .court-time-dialog { max-width: 300px; }
+    .court-time-fields {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 10px;
+    }
+    .court-time-fields label {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+    }
+    .court-time-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      text-align: center;
+    }
+    .court-time-select {
+      padding: 9px 8px;
+      border: 1.5px solid var(--line-2);
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 15px;
+      font-weight: 600;
+      text-align: center;
+      outline: none;
+      background: var(--surface);
+      color: var(--ink);
+      cursor: pointer;
+      width: 100%;
+    }
+    .court-time-select:focus { border-color: var(--accent-ink); box-shadow: 0 0 0 2px rgba(74,108,64,0.15); }
+    .court-time-sep {
+      font-size: 18px;
+      color: var(--ink-3);
+      padding-bottom: 10px;
+      flex-shrink: 0;
+    }
 
     /* ── Day tabs (mobile) ── */
     .day-tabs-mobile {
@@ -1681,6 +1778,39 @@ function fmtWeekRange(start) {
 }
 const money = (n) => `$${(Math.round(n * 100) / 100).toFixed(2)}`;
 
+/* ── Court time helpers ── */
+function fmtTime12(t) {
+  if (!t) return '';
+  const [h, m] = t.split(':').map(Number);
+  const h12 = h % 12 || 12;
+  return m > 0 ? `${h12}:${String(m).padStart(2, '0')}` : String(h12);
+}
+function getCourtDay(courtBookings, dateIso) {
+  const day = (courtBookings || {})[dateIso];
+  if (!day) return {};
+  if (Array.isArray(day)) {
+    const obj = {};
+    day.forEach(n => { obj[String(n)] = { start: '18:00', end: '19:30' }; });
+    return obj;
+  }
+  return day;
+}
+function nextDateForDow(dow) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayDow = today.getDay();
+  let diff = dow - todayDow;
+  if (diff < 0) diff += 7;
+  return addDays(today, diff);
+}
+const COURT_TIME_OPTIONS = [];
+for (let h = 17; h <= 22; h++) {
+  for (let m = 0; m < 60; m += 30) {
+    if (h === 22 && m > 0) break;
+    COURT_TIME_OPTIONS.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+  }
+}
+
 /* ───── Supabase Persistence ───── */
 
 /* Unique ID for this browser tab — used to identify our own realtime echoes */
@@ -1970,10 +2100,26 @@ function App() {
   function toggleCourtBooking(dateIso, courtNum) {
     setState(s => {
       const bookings = { ...(s.courtBookings || {}) };
-      const courts = [...(bookings[dateIso] || [])];
-      const idx = courts.indexOf(courtNum);
-      if (idx >= 0) courts.splice(idx, 1); else courts.push(courtNum);
-      bookings[dateIso] = courts;
+      const dayData = { ...getCourtDay(s.courtBookings, dateIso) };
+      const key = String(courtNum);
+      if (dayData[key]) {
+        delete dayData[key];
+      } else {
+        dayData[key] = { start: '18:00', end: '19:30' };
+      }
+      bookings[dateIso] = dayData;
+      return { ...s, courtBookings: bookings };
+    });
+  }
+  function updateCourtTimes(dateIso, courtNum, start, end) {
+    setState(s => {
+      const bookings = { ...(s.courtBookings || {}) };
+      const dayData = { ...getCourtDay(s.courtBookings, dateIso) };
+      const key = String(courtNum);
+      if (dayData[key]) {
+        dayData[key] = { start, end };
+        bookings[dateIso] = dayData;
+      }
       return { ...s, courtBookings: bookings };
     });
   }
@@ -2046,6 +2192,7 @@ function App() {
         <CourtBookingsView
           state={state}
           onToggleCourt={toggleCourtBooking}
+          onUpdateCourtTimes={updateCourtTimes}
         />
       )}
 
@@ -2162,78 +2309,161 @@ function StatusFilter({ value, onChange }) {
 
 /* ───── Sessions view ───── */
 /* ───── Court bookings view ───── */
-function CourtBookingsView({ state, onToggleCourt }) {
-  const today = new Date();
-  const todayDow = today.getDay(); // 0=Sun
+function CourtBookingsView({ state, onToggleCourt, onUpdateCourtTimes }) {
+  const courtDays = [
+    { key: 'tue', label: 'Tuesday', dow: 2 },
+    { key: 'sat', label: 'Saturday', dow: 6 },
+  ];
+  const [activeDay, setActiveDay] = useState(courtDays[0].key);
+  const [editing, setEditing] = useState(null); // { dateIso, court, start, end }
 
-  // Find next session day (Tue=2, Wed=3, Sat=6) including today
-  const sessionDows = [2, 3, 6];
-  let nextDow = sessionDows.find(d => d >= todayDow);
-  let daysUntil;
-  if (nextDow !== undefined) {
-    daysUntil = nextDow - todayDow;
-  } else {
-    nextDow = sessionDows[0];
-    daysUntil = 7 - todayDow + nextDow;
-  }
-  const nextDate = addDays(today, daysUntil);
-  nextDate.setHours(0, 0, 0, 0);
+  const activeDayInfo = courtDays.find(d => d.key === activeDay);
+  const nextDate = nextDateForDow(activeDayInfo.dow);
   const nextIso = isoDate(nextDate);
-  const nextDayName = nextDate.toLocaleDateString(undefined, { weekday: 'long' });
   const nextDateStr = nextDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-  const isToday = daysUntil === 0;
+  const todayStr = isoDate(new Date());
+  const isToday = nextIso === todayStr;
 
-  const bookedCourts = ((state.courtBookings || {})[nextIso] || []).slice().sort((a, b) => a - b);
+  const bookedMap = getCourtDay(state.courtBookings, nextIso);
+  const bookedKeys = Object.keys(bookedMap).map(Number).sort((a, b) => a - b);
+
   const row1 = [1, 2, 3, 4, 5, 6, 7];
   const row2 = [14, 13, 12, 11, 10, 9, 8];
 
+  const handleCellClick = (courtNum) => {
+    const key = String(courtNum);
+    if (bookedMap[key]) {
+      // Already booked — open editor
+      setEditing({ dateIso: nextIso, court: courtNum, start: bookedMap[key].start, end: bookedMap[key].end });
+    } else {
+      // Book with defaults then open editor
+      onToggleCourt(nextIso, courtNum);
+      setEditing({ dateIso: nextIso, court: courtNum, start: '18:00', end: '19:30' });
+    }
+  };
+
+  const saveEdit = () => {
+    if (editing) {
+      onUpdateCourtTimes(editing.dateIso, editing.court, editing.start, editing.end);
+      setEditing(null);
+    }
+  };
+  const unbookEdit = () => {
+    if (editing) {
+      onToggleCourt(editing.dateIso, editing.court);
+      setEditing(null);
+    }
+  };
+
+  const renderCell = (n, rowClass) => {
+    const key = String(n);
+    const isBooked = !!bookedMap[key];
+    const info = bookedMap[key];
+    return (
+      <button key={n}
+        className={`court-cell ${rowClass} ${isBooked ? 'booked' : ''}`}
+        onClick={() => handleCellClick(n)}>
+        <span className="court-num">{n}</span>
+        {isBooked && info && (
+          <span className="court-time">{fmtTime12(info.start)}–{fmtTime12(info.end)}</span>
+        )}
+      </button>
+    );
+  };
+
   return (
     <div className="court-bookings-view">
+      {/* Day tabs */}
+      <div className="court-day-tabs">
+        {courtDays.map(d => (
+          <button
+            key={d.key}
+            className={`court-day-tab ${activeDay === d.key ? 'active' : ''}`}
+            onClick={() => setActiveDay(d.key)}
+          >
+            {d.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Booking summary */}
       <div className="court-bookings-card">
         <div className="court-bookings-subtitle">
-          Court bookings for {isToday ? "today's" : 'the next upcoming'} <strong>{nextDayName}</strong> session{isToday ? '' : ' are'}:
+          Court bookings for {isToday ? "today's" : 'the next upcoming'} <strong>{activeDayInfo.label}</strong> session:
         </div>
         <div className="court-bookings-date">{nextDateStr}</div>
         <div className="court-booked-chips">
-          {bookedCourts.length === 0 ? (
+          {bookedKeys.length === 0 ? (
             <span className="court-booked-none">No courts booked yet — tap a court below</span>
-          ) : bookedCourts.map(c => (
-            <span key={c} className={`court-booked-chip ${c <= 7 ? 'row1' : 'row2'}`}>
-              Court {c}
-            </span>
-          ))}
+          ) : bookedKeys.map(c => {
+            const info = bookedMap[String(c)];
+            return (
+              <span key={c} className={`court-booked-chip ${c <= 7 ? 'row1' : 'row2'}`}>
+                Court {c}
+                {info && <span className="chip-time">{fmtTime12(info.start)}–{fmtTime12(info.end)}</span>}
+              </span>
+            );
+          })}
         </div>
       </div>
 
+      {/* Floor plan */}
       <div className="court-layout">
         <div className="court-layout-title">Floor Plan</div>
 
-        <div className="court-row-wrap">
-          <div className="court-row-label r1">Row 1</div>
-        </div>
+        <div className="court-row-wrap"><div className="court-row-label r1">Row 1</div></div>
         <div className="court-row">
-          {row1.map(n => (
-            <button key={n}
-              className={`court-cell r1 ${bookedCourts.includes(n) ? 'booked' : ''}`}
-              onClick={() => onToggleCourt(nextIso, n)}>
-              {n}
-            </button>
-          ))}
+          {row1.map(n => renderCell(n, 'r1'))}
         </div>
 
-        <div className="court-row-wrap">
-          <div className="court-row-label r2">Row 2</div>
-        </div>
+        <div className="court-row-wrap"><div className="court-row-label r2">Row 2</div></div>
         <div className="court-row">
-          {row2.map(n => (
-            <button key={n}
-              className={`court-cell r2 ${bookedCourts.includes(n) ? 'booked' : ''}`}
-              onClick={() => onToggleCourt(nextIso, n)}>
-              {n}
-            </button>
-          ))}
+          {row2.map(n => renderCell(n, 'r2'))}
         </div>
       </div>
+
+      {/* Time edit dialog */}
+      {editing && ReactDOM.createPortal(
+        <React.Fragment>
+          <div className="confirm-overlay" onClick={() => setEditing(null)} />
+          <div className="confirm-dialog court-time-dialog">
+            <div className="confirm-dialog-title">Court {editing.court}</div>
+            <div className="confirm-dialog-msg">{activeDayInfo.label} · {nextDateStr}</div>
+            <div className="court-time-fields">
+              <label>
+                <span className="court-time-label">Start</span>
+                <select
+                  className="court-time-select"
+                  value={editing.start}
+                  onChange={e => setEditing(prev => ({ ...prev, start: e.target.value }))}
+                >
+                  {COURT_TIME_OPTIONS.map(t => (
+                    <option key={t} value={t}>{fmtTime12(t)} {Number(t.split(':')[0]) >= 12 ? 'PM' : 'AM'}</option>
+                  ))}
+                </select>
+              </label>
+              <span className="court-time-sep">→</span>
+              <label>
+                <span className="court-time-label">End</span>
+                <select
+                  className="court-time-select"
+                  value={editing.end}
+                  onChange={e => setEditing(prev => ({ ...prev, end: e.target.value }))}
+                >
+                  {COURT_TIME_OPTIONS.map(t => (
+                    <option key={t} value={t}>{fmtTime12(t)} {Number(t.split(':')[0]) >= 12 ? 'PM' : 'AM'}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div className="confirm-dialog-btns" style={{ marginTop: 14 }}>
+              <button className="confirm-danger" onClick={unbookEdit}>Unbook</button>
+              <button className="confirm-primary" onClick={saveEdit}>Save</button>
+            </div>
+          </div>
+        </React.Fragment>,
+        document.body
+      )}
     </div>
   );
 }
