@@ -1939,6 +1939,25 @@ function App() {
     });
   }, []);
 
+  // Re-fetch from DB when tab regains focus (fixes stale-tab overwrite bug)
+  // Mobile browsers suspend tabs → realtime drops → state goes stale.
+  // Without this, tapping anything on a stale tab overwrites newer DB data.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && loaded.current) {
+        isRemoteUpdate.current = true;
+        loadStateFromDB().then(data => {
+          if (data) {
+            isRemoteUpdate.current = true;
+            setState(data);
+          }
+        });
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, []);
+
   // Save to Supabase on LOCAL state changes only
   useEffect(() => {
     if (!state || !loaded.current) return;
