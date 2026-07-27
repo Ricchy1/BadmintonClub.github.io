@@ -1133,6 +1133,149 @@
     }
     .pay-password-input:focus { border-color: var(--accent-ink); box-shadow: 0 0 0 2px rgba(74,108,64,0.15); }
     .pay-password-error { font-size: 12px; color: var(--danger); margin-bottom: 10px; }
+    /* ── Outstanding sessions expansion (People tab) ── */
+    .outstanding-expansion td {
+      padding: 0 !important;
+      border-bottom: 1px solid var(--line);
+      background: var(--bg);
+    }
+    .outstanding-expansion-inner {
+      padding: 8px 16px 12px;
+    }
+    .outstanding-expansion-title {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .outstanding-expansion-title .count-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: 999px;
+      background: var(--danger);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+    .outstanding-session-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto auto;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      transition: background 0.1s;
+    }
+    .outstanding-session-row:hover {
+      background: rgba(0,0,0,0.03);
+    }
+    .outstanding-session-row + .outstanding-session-row {
+      border-top: 1px dashed var(--line);
+    }
+    .os-day-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      background: var(--bg-2);
+      color: var(--ink-2);
+      text-transform: uppercase;
+      min-width: 32px;
+      text-align: center;
+    }
+    .os-date-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .os-amount {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--danger);
+      text-align: right;
+      white-space: nowrap;
+    }
+    .os-amount .os-surcharge {
+      display: block;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--warn);
+      line-height: 1;
+      margin-top: 1px;
+    }
+    .os-pay-check {
+      width: 30px; height: 30px;
+      padding: 0;
+      border-radius: 999px;
+      border: 1.5px dashed var(--line-2);
+      background: var(--surface);
+      color: var(--ink-3);
+      display: grid; place-items: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+    .os-pay-check:hover { border-color: var(--ink); color: var(--ink); border-style: solid; }
+    .os-pay-check.on {
+      background: var(--accent);
+      border-color: var(--accent);
+      border-style: solid;
+      color: var(--accent-ink);
+    }
+    .os-pay-check.on svg { width: 13px; height: 13px; }
+    .os-paid-row .os-amount {
+      color: var(--accent-ink);
+      text-decoration: line-through;
+      text-decoration-thickness: 1.5px;
+      text-decoration-color: color-mix(in oklab, var(--accent-ink) 60%, transparent);
+    }
+    .os-paid-row .os-amount .os-surcharge {
+      color: var(--accent-ink);
+      text-decoration: line-through;
+    }
+    .outstanding-total-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 8px 2px;
+      margin-top: 4px;
+      border-top: 1.5px solid var(--line-2);
+    }
+    .outstanding-total-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+    }
+    .outstanding-total-amount {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--danger);
+    }
+    .outstanding-none {
+      font-size: 12px;
+      color: var(--ink-3);
+      font-style: italic;
+      padding: 4px 8px;
+    }
+
     .people-table thead th.center { text-align: center; }
     .people-table tbody td {
       padding: 12px 16px;
@@ -1710,6 +1853,20 @@
 
       .day-card { max-width: 100%; }
       .sessions { max-width: 100%; }
+
+      .outstanding-expansion-inner { padding: 4px 6px 8px; }
+      .outstanding-expansion-title { font-size: 9px; margin-bottom: 4px; }
+      .outstanding-expansion-title .count-badge { min-width: 14px; height: 14px; font-size: 8px; padding: 0 3px; }
+      .outstanding-session-row { gap: 4px; padding: 3px 4px; }
+      .os-day-badge { font-size: 8px; padding: 2px 5px; }
+      .os-date-label { font-size: 10px; }
+      .os-amount { font-size: 11px; }
+      .os-amount .os-surcharge { font-size: 8px; }
+      .os-pay-check { width: 22px; height: 22px; font-size: 9px; }
+      .os-pay-check.on svg { width: 10px; height: 10px; }
+      .outstanding-total-row { padding: 4px 4px 0; }
+      .outstanding-total-label { font-size: 9px; }
+      .outstanding-total-amount { font-size: 12px; }
     }
     }
   </style>
@@ -2273,6 +2430,7 @@ function App() {
           onToggleLangdon={toggleLangdon}
           onSetAllShuttle={setAllShuttle}
           onToggleDay={togglePersonDay}
+          onTogglePay={handleTogglePay}
           colFilters={colFilters}
           setColFilters={setColFilters}
         />
@@ -3119,7 +3277,7 @@ function FilterCheckboxPopup({ items, selected, searchable, alignRight, onToggle
 }
 
 /* ───── Roster (people management) view ───── */
-function RosterView({ people, shuttlecocks, sessions, newName, setNewName, newNameRef, onAdd, onRemove, onRename, onToggleShuttle, onToggleLangdon, onSetAllShuttle, onToggleDay, colFilters, setColFilters }) {
+function RosterView({ people, shuttlecocks, sessions, newName, setNewName, newNameRef, onAdd, onRemove, onRename, onToggleShuttle, onToggleLangdon, onSetAllShuttle, onToggleDay, onTogglePay, colFilters, setColFilters }) {
   const allPaid = people.length > 0 && people.every(p => p.shuttlePaid);
   // Derive each person's current shuttle coverage based on today + shuttlecocks.
   // Used for display only — actual surcharge decisions happen per-session.
@@ -3376,8 +3534,30 @@ function RosterView({ people, shuttlecocks, sessions, newName, setNewName, newNa
             {sortedPeople.map(p => {
               const isFocused = focusedId === p.id;
               const isDimmed = focusedId && !isFocused;
+              /* Build the list of ALL sessions this person attended (unpaid first, then paid) for the expansion */
+              const allSessionItems = [];
+              for (const date of sortedSessionDates) {
+                const sess = sessions[date] || {};
+                const att = sess.attendance || {};
+                const pays = sess.payments || {};
+                if (!att[p.id]) continue;
+                const attendedIds = Object.keys(att).filter(pid => att[pid] && people.some(pp => pp.id === pid));
+                const ct = attendedIds.length;
+                if (ct === 0) continue;
+                const courtHire = Number(sess.courtHire) || 0;
+                const baseSplit = courtHire > 0 ? courtHire / ct : 0;
+                const sur = p.langdon ? 0 : (isCoveredOn(p.id, date, shuttlecocks || []) ? 0 : SHUTTLE_SURCHARGE);
+                const total = baseSplit + sur;
+                const [Y, M, D] = date.split('-').map(Number);
+                const dow = new Date(Y, M - 1, D).getDay();
+                const dayShort = (DAYS.find(d => d.dow === dow) || {}).short || '';
+                const paid = !!pays[p.id];
+                allSessionItems.push({ date, dayShort, base: baseSplit, surcharge: sur, total, paid });
+              }
+              const unpaidItems = allSessionItems.filter(it => !it.paid);
               return (
-              <tr key={p.id} className={`${isFocused ? 'row-focused' : ''} ${isDimmed ? 'row-dimmed' : ''}`}>
+              <React.Fragment key={p.id}>
+              <tr className={`${isFocused ? 'row-focused' : ''} ${isDimmed ? 'row-dimmed' : ''}`}>
                 <td className="name-cell">
                   <button
                     className={`focus-dot ${isFocused ? 'on' : ''}`}
@@ -3490,6 +3670,56 @@ function RosterView({ people, shuttlecocks, sessions, newName, setNewName, newNa
                   </button>
                 </td>
               </tr>
+              {isFocused && (
+                <tr className="outstanding-expansion">
+                  <td colSpan="8">
+                    <div className="outstanding-expansion-inner">
+                      <div className="outstanding-expansion-title">
+                        Outstanding sessions
+                        {unpaidItems.length > 0 && <span className="count-badge">{unpaidItems.length}</span>}
+                      </div>
+                      {allSessionItems.length === 0 ? (
+                        <div className="outstanding-none">No sessions attended yet.</div>
+                      ) : unpaidItems.length === 0 ? (
+                        <div className="outstanding-none">All sessions paid ✓</div>
+                      ) : (
+                        <>
+                          {unpaidItems.map((it, i) => {
+                            const paid = it.paid;
+                            return (
+                              <div key={it.date} className={`outstanding-session-row ${paid ? 'os-paid-row' : ''}`}>
+                                <span className="os-day-badge">{it.dayShort}</span>
+                                <span className="os-date-label">{it.date.split('-').reverse().join('/')}</span>
+                                <span className="os-amount">
+                                  {money(it.total)}
+                                  {it.surcharge > 0 && <span className="os-surcharge">incl. +${it.surcharge}</span>}
+                                </span>
+                                <button
+                                  className={`os-pay-check ${paid ? 'on' : ''}`}
+                                  onClick={() => onTogglePay(it.date, p.id)}
+                                  data-tip={paid ? 'Paid · click to unmark' : 'Mark as paid'}
+                                  aria-label={`Toggle paid for ${p.name} on ${it.date}`}
+                                >
+                                  {paid ? (
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                  ) : (
+                                    <span className="pay-dash">$</span>
+                                  )}
+                                </button>
+                              </div>
+                            );
+                          })}
+                          <div className="outstanding-total-row">
+                            <span className="outstanding-total-label">Total outstanding</span>
+                            <span className="outstanding-total-amount">{money(sessionOwed[p.id] || 0)}</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              )}
+              </React.Fragment>
               );
             })}
           </tbody>
